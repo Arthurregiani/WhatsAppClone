@@ -50,4 +50,10 @@ dependencies {
     //dependencias firebase
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
     implementation("com.google.firebase:firebase-analytics")
+    // Importe a BoM para a plataforma Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+    // Dependência para a biblioteca do Realtime Database
+    // Quando usar a BoM, você não precisa especificar versões nas dependênciasda biblioteca do Firebase
+    implementation("com.google.firebase:firebase-database-ktx")
+
 }
