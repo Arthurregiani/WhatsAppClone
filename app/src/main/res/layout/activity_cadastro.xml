@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimary"
-    tools:context=".CadastroActivity">
+    tools:context=".ui.cadastro.CadastroActivity">
 
     <ImageView
         android:id="@+id/imageViewCadastrar"
@@ -39,6 +39,7 @@
         app:layout_constraintVertical_bias="0.5">
 
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editTextNome"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/digite_nome"
@@ -62,6 +63,7 @@
         app:layout_constraintVertical_bias="0.5">
 
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editTextEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/digite_email"
@@ -78,13 +80,14 @@
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="8dp"
         android:textColorHint="@color/white"
-        app:layout_constraintBottom_toTopOf="@+id/button2"
+        app:layout_constraintBottom_toTopOf="@+id/buttonCadastrar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/TextInputEmail"
         tools:hintTextColor="@color/white">
 
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editTextSenha"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/digite_senha"
@@ -93,7 +96,7 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/buttonCadastrar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"

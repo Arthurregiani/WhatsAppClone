@@ -34,6 +34,10 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    viewBinding{
+        enable = true
+    }
 }
 
 dependencies {
@@ -43,17 +47,17 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.firebase.firestore.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
     //dependencias firebase
-    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
-    implementation("com.google.firebase:firebase-analytics")
-    // Importe a BoM para a plataforma Firebase
-    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+    implementation("com.google.firebase:firebase-analytics:21.0.0")
     // Dependência para a biblioteca do Realtime Database
-    // Quando usar a BoM, você não precisa especificar versões nas dependênciasda biblioteca do Firebase
-    implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-database:21.0.0")
+    // Dependência para a biblioteca do Firebase Auth
+    implementation("com.google.firebase:firebase-auth:21.0.0")
+
 
 }

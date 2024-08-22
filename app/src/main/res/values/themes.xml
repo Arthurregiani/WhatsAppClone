@@ -1,11 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.WhatsAppClone" parent="Theme.Material3.Light.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-
+<!--        <item name="android:statusBarColor">@color/colorPrimaryDark</item>-->
+<!--        <item name="android:windowLightStatusBar">false</item>-->
 
     </style>
 
-    <style name="Theme.WhatsAppClone" parent="Base.Theme.WhatsAppClone" />
+    <style name="Theme.WhatsAppClone" parent="Base.Theme.WhatsAppClone"/>
 </resources>
