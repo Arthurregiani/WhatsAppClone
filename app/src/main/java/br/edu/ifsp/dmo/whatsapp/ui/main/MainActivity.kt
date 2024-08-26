@@ -1,4 +1,4 @@
-package br.edu.ifsp.dmo.whatsapp.ui
+package br.edu.ifsp.dmo.whatsapp.ui.main
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

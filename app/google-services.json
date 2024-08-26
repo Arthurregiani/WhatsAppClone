@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "51917986807",
-    "project_id": "whatsapp-ef40b",
-    "storage_bucket": "whatsapp-ef40b.appspot.com"
+    "project_number": "229518095962",
+    "project_id": "whatsapp-clone-58108",
+    "storage_bucket": "whatsapp-clone-58108.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:51917986807:android:af759395e7c9891b94ecf2",
+        "mobilesdk_app_id": "1:229518095962:android:295fb6388547b5c2bdca63",
         "android_client_info": {
           "package_name": "br.edu.ifsp.dmo.whatsapp"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCklKkWJjVusxu93tb1IBWpYLMxj1vohMM"
+          "current_key": "AIzaSyB79UFAJjypID4qq5y3zvF0Mdei8IatJN4"
         }
       ],
       "services": {

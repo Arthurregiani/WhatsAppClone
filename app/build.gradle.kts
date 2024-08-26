@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     id("com.google.gms.google-services")
+
 }
 
 android {
@@ -52,12 +53,17 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
+    //firebase bom
+    implementation(platform(libs.firebase.bom))
+
     //dependencias firebase
-    implementation("com.google.firebase:firebase-analytics:21.0.0")
+    implementation(libs.firebase.analytics)
+
     // Dependência para a biblioteca do Realtime Database
-    implementation("com.google.firebase:firebase-database:21.0.0")
+    implementation(libs.firebase.database)
+
     // Dependência para a biblioteca do Firebase Auth
-    implementation("com.google.firebase:firebase-auth:21.0.0")
+    implementation(libs.firebase.auth)
 
 
 }
