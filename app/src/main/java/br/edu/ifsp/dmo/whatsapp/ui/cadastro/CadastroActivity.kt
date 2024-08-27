@@ -5,8 +5,11 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.Observer
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityCadastroBinding
 import br.edu.ifsp.dmo.whatsapp.ui.login.LoginActivity
+import br.edu.ifsp.dmo.whatsapp.data.repositories.UsuarioRepository
+import com.google.firebase.auth.FirebaseAuth
 
 class CadastroActivity : AppCompatActivity() {
 
@@ -17,27 +20,32 @@ class CadastroActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityCadastroBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        viewModel = ViewModelProvider(this)[CadastroViewModel::class.java]
+
+        // Inicializar o ViewModel com uma Factory
+        val viewModelFactory = CadastroViewModelFactory(UsuarioRepository(FirebaseAuth.getInstance()))
+        viewModel = ViewModelProvider(this, viewModelFactory).get(CadastroViewModel::class.java)
+
+        // Observar o status do cadastro
+        viewModel.cadastroStatus.observe(this, Observer { result ->
+            val (sucesso, mensagemErro) = result
+            if (sucesso) {
+                Toast.makeText(this, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                abrirTelaLogin()
+            } else {
+                Toast.makeText(this, "Falha no cadastro: $mensagemErro", Toast.LENGTH_SHORT).show()
+            }
+        })
+
         setClickListeners()
     }
 
-
     private fun setClickListeners() {
         binding.buttonCadastrar.setOnClickListener {
-            // Obter os dados de cadastro
             val userName = binding.editTextNome.text.toString()
             val email = binding.editTextEmail.text.toString()
             val senha = binding.editTextSenha.text.toString()
-
-            //valida os dados de cadastro
             if (validarDados(userName, email, senha)) {
-
-                // Cadastrar o usuário
                 viewModel.cadastrarUsuario(userName, email, senha)
-                Toast.makeText(this, "Cadastro realizado com sucesso", Toast.LENGTH_SHORT).show()
-                abrirTelaLogin()
-
-
             }
         }
     }
@@ -45,30 +53,26 @@ class CadastroActivity : AppCompatActivity() {
     private fun abrirTelaLogin() {
         val intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
+        finish()
     }
 
-
-    // Validar os dados de cadastro
     private fun validarDados(userName: String, email: String, senha: String): Boolean {
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
-        // Verificar se os campos não estão vazios
-        if (userName.isNotEmpty()) {
-            if (email.matches(emailPattern.toRegex())) {
-                if (senha.isNotEmpty()) {
-                    return true
-                } else {
-                    Toast.makeText(this, "Preencha com a senha", Toast.LENGTH_SHORT).show()
-                    return false
-                }
-            } else {
-                Toast.makeText(this, "email invalido", Toast.LENGTH_SHORT).show()
-                return false
+        return when {
+            userName.isEmpty() -> {
+                Toast.makeText(this, "Nome inválido", Toast.LENGTH_SHORT).show()
+                false
             }
-        } else {
-            //exibir mensagem de erro se os campos não foram completos
-            Toast.makeText(this, "Nome invalido", Toast.LENGTH_SHORT).show()
-            return false
+            !email.matches(emailPattern.toRegex()) -> {
+                Toast.makeText(this, "Email inválido", Toast.LENGTH_SHORT).show()
+                false
+            }
+            senha.length < 6 -> {
+                Toast.makeText(this, "A senha deve ter pelo menos 6 caracteres", Toast.LENGTH_SHORT).show()
+                false
+            }
+            else -> true
         }
     }
-
 }
+

@@ -53,15 +53,15 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    //firebase bom
-    implementation(platform(libs.firebase.bom))
+    //lifecycle
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
 
     //dependencias firebase
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
-
     // Dependência para a biblioteca do Realtime Database
     implementation(libs.firebase.database)
-
     // Dependência para a biblioteca do Firebase Auth
     implementation(libs.firebase.auth)
 
