@@ -40,9 +40,6 @@ class UsuarioRepository(private val auth: FirebaseAuth) {
             }
     }
 
-    fun verificarUsuarioAutenticado(): Boolean {
-        return auth.currentUser != null
-    }
 
     fun logout() {
         auth.signOut()

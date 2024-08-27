@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UsuarioRepository
-import com.google.firebase.auth.FirebaseAuth
+
 
 class LoginViewModel(private val usuarioRepository: UsuarioRepository) : ViewModel() {
 

@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.Observer
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityCadastroBinding
 import br.edu.ifsp.dmo.whatsapp.ui.login.LoginActivity
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UsuarioRepository
@@ -23,10 +22,10 @@ class CadastroActivity : AppCompatActivity() {
 
         // Inicializar o ViewModel com uma Factory
         val viewModelFactory = CadastroViewModelFactory(UsuarioRepository(FirebaseAuth.getInstance()))
-        viewModel = ViewModelProvider(this, viewModelFactory).get(CadastroViewModel::class.java)
+        viewModel = ViewModelProvider(this, viewModelFactory)[CadastroViewModel::class.java]
 
         // Observar o status do cadastro
-        viewModel.cadastroStatus.observe(this, Observer { result ->
+        viewModel.cadastroStatus.observe(this) { result ->
             val (sucesso, mensagemErro) = result
             if (sucesso) {
                 Toast.makeText(this, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show()
@@ -34,7 +33,7 @@ class CadastroActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "Falha no cadastro: $mensagemErro", Toast.LENGTH_SHORT).show()
             }
-        })
+        }
 
         setClickListeners()
     }

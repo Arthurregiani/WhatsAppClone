@@ -3,7 +3,6 @@ package br.edu.ifsp.dmo.whatsapp.ui.cadastro
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UsuarioRepository
-import com.google.firebase.auth.FirebaseAuth
 
 class CadastroViewModelFactory(private val usuarioRepository: UsuarioRepository) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
