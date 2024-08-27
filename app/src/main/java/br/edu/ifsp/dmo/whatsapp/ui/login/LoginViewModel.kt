@@ -4,18 +4,25 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UsuarioRepository
+import com.google.firebase.auth.FirebaseAuth
 
 class LoginViewModel(private val usuarioRepository: UsuarioRepository) : ViewModel() {
 
-    private val _authStatus = MutableLiveData<Result<Boolean>>()
-    val authStatus: LiveData<Result<Boolean>> get() = _authStatus
+    private val _authStatus = MutableLiveData<Boolean>()
+    val authStatus: LiveData<Boolean> get() = _authStatus
+
+    init {
+        usuarioRepository.authStatus.observeForever { isAuthenticated ->
+            _authStatus.value = isAuthenticated
+        }
+    }
 
     fun autenticarUsuario(email: String, senha: String) {
         usuarioRepository.validarAutenticacao(email, senha) { sucesso, mensagemErro ->
             if (sucesso) {
-                _authStatus.value = Result.success(true)
+                _authStatus.value = true // Login bem-sucedido
             } else {
-                _authStatus.value = Result.failure(Exception(mensagemErro ?: "Erro desconhecido"))
+                _authStatus.value = false // Falha no login
             }
         }
     }

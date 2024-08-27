@@ -1,20 +1,25 @@
 package br.edu.ifsp.dmo.whatsapp.data.repositories
 
-
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import br.edu.ifsp.dmo.whatsapp.data.model.Usuario
 import com.google.firebase.auth.FirebaseAuth
 
-
-class UsuarioRepository (private var auth : FirebaseAuth) {
+class UsuarioRepository(private val auth: FirebaseAuth) {
 
     // LiveData para monitorar o estado de autenticação
-    private val _authStatus = MutableLiveData<Result<Boolean>>()
-    val authStatus: LiveData<Result<Boolean>> get() = _authStatus
+    private val _authStatus = MutableLiveData<Boolean>()
+    val authStatus: LiveData<Boolean> get() = _authStatus
+
+    init {
+        // Observa mudanças no estado de autenticação
+        auth.addAuthStateListener { firebaseAuth ->
+            _authStatus.value = firebaseAuth.currentUser != null
+        }
+    }
 
     fun cadastrarUsuario(usuario: Usuario, callback: (Boolean, String?) -> Unit) {
-        auth.createUserWithEmailAndPassword(usuario.email, usuario.senha)
+        auth.createUserWithEmailAndPassword(usuario.email, usuario.password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     callback(true, null)  // Cadastro bem-sucedido
@@ -23,7 +28,6 @@ class UsuarioRepository (private var auth : FirebaseAuth) {
                 }
             }
     }
-
 
     fun validarAutenticacao(email: String, senha: String, callback: (Boolean, String?) -> Unit) {
         auth.signInWithEmailAndPassword(email, senha)
@@ -35,6 +39,12 @@ class UsuarioRepository (private var auth : FirebaseAuth) {
                 }
             }
     }
+
+    fun verificarUsuarioAutenticado(): Boolean {
+        return auth.currentUser != null
+    }
+
+    fun logout() {
+        auth.signOut()
+    }
 }
-
-

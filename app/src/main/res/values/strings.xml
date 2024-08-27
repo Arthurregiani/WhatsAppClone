@@ -6,5 +6,9 @@
     <string name="nao_tem_conta">Não tem uma conta? Cadastre-se</string>
     <string name="digite_nome">Digite seu nome</string>
     <string name="botao_cadastrar">Cadastrar</string>
+    <string name="menu_pesquisar">Pesquisar</string>
+    <string name="menu_config">Configurações</string>
+    <string name="logout">Sair</string>
+    <string name="whatsapp">WhatsApp</string>
 
 </resources>

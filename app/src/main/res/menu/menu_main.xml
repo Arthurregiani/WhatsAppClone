@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/menuPesquisa"
+        android:title="@string/menu_pesquisar"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_search"
+        />
+    <item android:id="@+id/menuSettings"
+        android:title="@string/menu_config"
+        app:showAsAction="never"
+        android:icon="@drawable/ic_settings"
+        />
+
+    <item android:id="@+id/menuLogout"
+        android:title="@string/logout"
+        app:showAsAction="never"
+        android:icon="@drawable/ic_exit"
+        />
+
+</menu>
