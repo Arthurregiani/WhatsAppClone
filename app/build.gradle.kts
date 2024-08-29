@@ -48,7 +48,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.firebase.firestore.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -59,6 +58,7 @@ dependencies {
 
     //dependencias firebase
     implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.analytics)
     // Dependência para a biblioteca do Realtime Database
     implementation(libs.firebase.database)

@@ -5,4 +5,4 @@
     android:layout_height="?attr/actionBarSize"
     android:background="@color/colorPrimary"
     android:theme="@style/Toolbar"
-    android:title="@string/whatsapp"/>
+    />

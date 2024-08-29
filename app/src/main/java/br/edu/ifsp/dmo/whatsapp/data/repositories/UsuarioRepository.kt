@@ -40,7 +40,6 @@ class UsuarioRepository(private val auth: FirebaseAuth) {
             }
     }
 
-
     fun logout() {
         auth.signOut()
     }

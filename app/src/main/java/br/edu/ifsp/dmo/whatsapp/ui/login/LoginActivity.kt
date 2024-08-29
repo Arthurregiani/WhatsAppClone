@@ -7,6 +7,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UsuarioRepository
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityLoginBinding
+import br.edu.ifsp.dmo.whatsapp.ui.cadastro.CadastroActivity
 import br.edu.ifsp.dmo.whatsapp.ui.main.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 
@@ -35,6 +36,10 @@ class LoginActivity : AppCompatActivity() {
             if (validarEntradaDados(email, password)) {
                 loginViewModel.autenticarUsuario(email, password)
             }
+        }
+
+        binding.textViewCadastro.setOnClickListener {
+            startActivity(Intent(this, CadastroActivity::class.java))
         }
     }
 
