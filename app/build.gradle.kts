@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     id("com.google.gms.google-services")
 
+    kotlin("kapt") // Plugin para Kotlin Annotation Processing Tool (KAPT)
+
 }
 
 android {
@@ -64,6 +66,9 @@ dependencies {
     implementation(libs.firebase.database)
     // Dependência para a biblioteca do Firebase Auth
     implementation(libs.firebase.auth)
+
+    implementation(libs.glide) // Glide para carregamento de imagens
+    kapt(libs.compiler) // KAPT para processar as anotações do Glide
 
 
 }

@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Tema padrão do login -->
     <style name="StyleWhatsApp" parent="Theme.Material3.Light.NoActionBar">
@@ -9,10 +8,15 @@
 
         <item name="android:statusBarColor">@color/colorPrimaryDark</item>
         <item name="android:windowLightStatusBar">false</item>
-
     </style>
 
     <style name="Toolbar" parent="Theme.AppCompat.NoActionBar">
+        <!-- Customizações específicas para a Toolbar -->
+    </style>
 
+    <!-- Define a aparência circular da ImageView -->
+    <style name="CircularShapeAppearance">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
     </style>
 </resources>
