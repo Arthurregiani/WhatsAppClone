@@ -12,10 +12,16 @@ class CadastroViewModel(private val usuarioRepository: UsuarioRepository) : View
     val cadastroStatus: LiveData<Pair<Boolean, String?>> get() = _cadastroStatus
 
     fun cadastrarUsuario(userName: String, email: String, password: String) {
-        val user = Usuario(userName, email, password)
-
-        usuarioRepository.cadastrarUsuario(user) { success, messageError ->
-            _cadastroStatus.value = Pair(success, messageError)
+        usuarioRepository.cadastrarAutenticacaoUsuario(email, password) { success, uid, messageError ->
+            // se o cadastro for bem-sucedido passa o uid da autenticação
+            // para o banco de dados
+            if (success && uid != null) {
+                val user = Usuario(userName, email)
+                usuarioRepository.cadastrarUsuarioDatabase(uid, user)
+                _cadastroStatus.value = Pair(true, null)
+            } else {
+                _cadastroStatus.value = Pair(false, messageError)
+            }
         }
     }
 }
