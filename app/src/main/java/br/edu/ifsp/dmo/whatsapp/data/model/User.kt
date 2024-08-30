@@ -1,6 +1,6 @@
 package br.edu.ifsp.dmo.whatsapp.data.model
 
-class Usuario(
+class User(
     val nome: String,
     val email: String
 ) {

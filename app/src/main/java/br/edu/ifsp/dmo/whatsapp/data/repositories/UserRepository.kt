@@ -2,11 +2,11 @@ package br.edu.ifsp.dmo.whatsapp.data.repositories
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import br.edu.ifsp.dmo.whatsapp.data.model.Usuario
+import br.edu.ifsp.dmo.whatsapp.data.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
-class UsuarioRepository(private val auth: FirebaseAuth) {
+class UserRepository(private val auth: FirebaseAuth) {
 
     // Instância do Firebase Realtime Database
     private val database = FirebaseDatabase.getInstance()
@@ -37,11 +37,11 @@ class UsuarioRepository(private val auth: FirebaseAuth) {
             }
     }
 
-    fun cadastrarUsuarioDatabase(uid: String, usuario: Usuario) {
+    fun cadastrarUsuarioDatabase(uid: String, user: User) {
         // Salvar apenas o nome e o email no Firebase Realtime Database
         // com base no UID do usuário autenticado
         val usuariosRef = database.getReference("users")
-        usuariosRef.child(uid).setValue(usuario)
+        usuariosRef.child(uid).setValue(user)
     }
 
     fun validarAutenticacao(email: String, senha: String, callback: (Boolean, String?) -> Unit) {

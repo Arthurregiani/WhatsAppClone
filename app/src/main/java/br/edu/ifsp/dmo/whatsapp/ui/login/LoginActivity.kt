@@ -5,9 +5,9 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import br.edu.ifsp.dmo.whatsapp.data.repositories.UsuarioRepository
+import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityLoginBinding
-import br.edu.ifsp.dmo.whatsapp.ui.cadastro.CadastroActivity
+import br.edu.ifsp.dmo.whatsapp.ui.registration.RegistrationActivity
 import br.edu.ifsp.dmo.whatsapp.ui.main.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 
@@ -15,7 +15,7 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
     private val loginViewModel: LoginViewModel by viewModels {
-        LoginViewModelFactory(UsuarioRepository(FirebaseAuth.getInstance()))
+        LoginViewModelFactory(UserRepository(FirebaseAuth.getInstance()))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,7 +39,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.textViewCadastro.setOnClickListener {
-            startActivity(Intent(this, CadastroActivity::class.java))
+            startActivity(Intent(this, RegistrationActivity::class.java))
         }
     }
 

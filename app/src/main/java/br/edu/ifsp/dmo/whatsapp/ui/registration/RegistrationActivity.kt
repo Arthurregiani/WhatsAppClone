@@ -1,4 +1,4 @@
-package br.edu.ifsp.dmo.whatsapp.ui.cadastro
+package br.edu.ifsp.dmo.whatsapp.ui.registration
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,13 +7,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityCadastroBinding
 import br.edu.ifsp.dmo.whatsapp.ui.login.LoginActivity
-import br.edu.ifsp.dmo.whatsapp.data.repositories.UsuarioRepository
+import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 
-class CadastroActivity : AppCompatActivity() {
+class RegistrationActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCadastroBinding
-    private lateinit var viewModel: CadastroViewModel
+    private lateinit var viewModel: RegistrationViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,8 +21,8 @@ class CadastroActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Inicializar o ViewModel com uma Factory
-        val viewModelFactory = CadastroViewModelFactory(UsuarioRepository(FirebaseAuth.getInstance()))
-        viewModel = ViewModelProvider(this, viewModelFactory)[CadastroViewModel::class.java]
+        val viewModelFactory = RegistrationViewModelFactory(UserRepository(FirebaseAuth.getInstance()))
+        viewModel = ViewModelProvider(this, viewModelFactory)[RegistrationViewModel::class.java]
 
         // Observar o status do cadastro
         viewModel.cadastroStatus.observe(this) { result ->

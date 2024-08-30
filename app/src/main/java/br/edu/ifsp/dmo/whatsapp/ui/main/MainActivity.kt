@@ -5,9 +5,9 @@ import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import br.edu.ifsp.dmo.whatsapp.R
-import br.edu.ifsp.dmo.whatsapp.data.repositories.UsuarioRepository
+import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityMainBinding
-import br.edu.ifsp.dmo.whatsapp.ui.configuracoes.ConfiguracoesActivity
+import br.edu.ifsp.dmo.whatsapp.ui.settings.SettingsActivity
 import br.edu.ifsp.dmo.whatsapp.ui.login.LoginActivity
 import br.edu.ifsp.dmo.whatsapp.ui.main.adapter.MainViewPagerAdapter
 import com.google.android.material.tabs.TabLayoutMediator
@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val mainViewModel: MainViewModel by viewModels {
-        MainViewModelFactory(UsuarioRepository(FirebaseAuth.getInstance()))
+        MainViewModelFactory(UserRepository(FirebaseAuth.getInstance()))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun abrirConfiguracoes() {
-        startActivity(Intent(this, ConfiguracoesActivity::class.java))
+        startActivity(Intent(this, SettingsActivity::class.java))
     }
 
 
