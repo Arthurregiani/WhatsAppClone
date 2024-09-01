@@ -66,6 +66,8 @@ dependencies {
     implementation(libs.firebase.database)
     // Dependência para a biblioteca do Firebase Auth
     implementation(libs.firebase.auth)
+    // Dependência para a biblioteca do Firebase Storage
+    implementation(libs.firebase.storage)
 
     implementation(libs.glide) // Glide para carregamento de imagens
     kapt(libs.compiler) // KAPT para processar as anotações do Glide

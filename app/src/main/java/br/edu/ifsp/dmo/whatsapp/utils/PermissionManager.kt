@@ -6,18 +6,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-class PermissionManager(private val activity: Activity) {
+class PermissionManager(
+    private val activity: Activity,
+    private val callback: (Int, List<String>, List<String>) -> Unit
+) {
 
-    private var onPermissionsResult: ((grantedPermissions: List<String>, deniedPermissions: List<String>) -> Unit)? = null
-
-    // Solicita as permissões necessárias e define o callback para lidar com os resultados
-    fun requestPermission(
-        requestCode: Int,
-        permissions: Array<String>,
-        onResult: (grantedPermissions: List<String>, deniedPermissions: List<String>) -> Unit
-    ) {
-        onPermissionsResult = onResult
-
+    fun requestPermission(requestCode: Int, vararg permissions: String) {
         val permissionsNeeded = permissions.filter {
             ContextCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED
         }
@@ -25,19 +19,15 @@ class PermissionManager(private val activity: Activity) {
         if (permissionsNeeded.isNotEmpty()) {
             ActivityCompat.requestPermissions(activity, permissionsNeeded.toTypedArray(), requestCode)
         } else {
-            onPermissionsResult?.invoke(permissions.toList(), emptyList())
+            callback(requestCode, permissions.toList(), emptyList())
         }
     }
 
-    // Lida com os resultados das permissões solicitadas
-    fun handlePermissionsResult(
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    fun handlePermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         val grantedPermissions = mutableListOf<String>()
         val deniedPermissions = mutableListOf<String>()
 
-        permissions.forEachIndexed { index, permission ->
+        for ((index, permission) in permissions.withIndex()) {
             if (grantResults[index] == PackageManager.PERMISSION_GRANTED) {
                 grantedPermissions.add(permission)
             } else {
@@ -45,22 +35,18 @@ class PermissionManager(private val activity: Activity) {
             }
         }
 
+        callback(requestCode, grantedPermissions, deniedPermissions)
+
         if (deniedPermissions.isNotEmpty()) {
             showPermissionDeniedDialog()
-        } else {
-            onPermissionsResult?.invoke(grantedPermissions, deniedPermissions)
         }
     }
 
-    // Exibe um diálogo informando o usuário sobre as permissões negadas e finaliza a activity
     private fun showPermissionDeniedDialog() {
         AlertDialog.Builder(activity)
-            .setTitle("Permissões negadas")
-            .setMessage("As permissões necessárias foram negadas. O aplicativo não pode continuar.")
-            .setPositiveButton("OK") { _, _ ->
-                activity.finish()
-            }
-            .setCancelable(false)
+            .setTitle("Permissões Necessárias")
+            .setMessage("Algumas permissões foram negadas. A aplicação não pode continuar sem essas permissões.")
+            .setPositiveButton("OK") { _, _ -> activity.finish() }
             .show()
     }
 }
