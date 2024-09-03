@@ -20,55 +20,30 @@ import com.google.firebase.auth.FirebaseAuth
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityConfiguracoesBinding
-    private lateinit var permissionManager: PermissionManager
     private val viewModel: SettingsViewModel by viewModels {
         SettingsViewModelFactory(ImageRepository(FirebaseAuth.getInstance()), UserRepository(FirebaseAuth.getInstance()))
     }
-
-    private val requiredPermissions = arrayOf(
-        android.Manifest.permission.CAMERA
-    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityConfiguracoesBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        permissionManager = PermissionManager(this) { _, _, deniedPermissions ->
-            deniedPermissions.forEach {
-                Toast.makeText(this, "Permissão negada: $it", Toast.LENGTH_SHORT).show()
-            }
-        }
 
-        requestPermissions()
-        configureToolbar()
-        configureButtons()
+        setupUI()
         setupObservers()
+        requestPermissions()
     }
 
-
+    private fun setupUI() {
+        configureToolbar()
+        configureButtons()
+    }
 
     private fun configureButtons() {
-        binding.imageButtonGalery.setOnClickListener {
-            pickImageLauncher.launch("image/*")
-        }
-
-        binding.imageButtonCam.setOnClickListener {
-            takePictureLauncher.launch(null)
-        }
-
-        // Configura o listener para o EditText
+        binding.imageButtonGalery.setOnClickListener { pickImageLauncher.launch("image/*") }
+        binding.imageButtonCam.setOnClickListener { takePictureLauncher.launch(null) }
         binding.editTextProfile.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) {
-                // Altera o ícone do ImageButton e o habilita
-                binding.buttonRename.apply {
-                    setImageResource(R.drawable.ic_check)
-                    isClickable = true
-                    setOnClickListener {
-                        val newName = binding.editTextProfile.text.toString()
-                        viewModel.uploadProfileName(newName)
-                    }
-                }
-            }
+            if (hasFocus) enableRenameButton()
         }
     }
 
@@ -77,61 +52,45 @@ class SettingsActivity : AppCompatActivity() {
     ) { bitmap ->
         bitmap?.let {
             val tempUri = Uri.parse(MediaStore.Images.Media.insertImage(contentResolver, it, "temp", null))
-            uploadImage(tempUri)
+            viewModel.uploadProfileImage(tempUri)
         }
     }
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let { uploadImage(it) }
-    }
+    ) { uri -> uri?.let { viewModel.uploadProfileImage(it) } }
 
-
-    private fun uploadImage(imageUri: Uri) {
-        viewModel.uploadProfileImage(imageUri)
+    private fun enableRenameButton() {
+        binding.buttonRename.apply {
+            setImageResource(R.drawable.ic_check)
+            isClickable = true
+            setOnClickListener {
+                viewModel.uploadProfileName(binding.editTextProfile.text.toString())
+            }
+        }
     }
 
     private fun setupObservers() {
-
-        // Observe se profileImageUri foi atualizado
         viewModel.profileImageUri.observe(this) { uri ->
-            uri?.let {
-                Glide.with(this)
-                    .load(it)
-                    .placeholder(R.drawable.user_image_default) // Placeholder image
-                    .into(binding.profileImage)
-            }
-            viewModel.profileName.observe(this){
-                binding.editTextProfile.setText(it)
-            }
+            Glide.with(this)
+                .load(uri ?: R.drawable.user_image_default)
+                .into(binding.profileImage)
         }
 
-        // Observe se o upload da foto foi bem-sucedido
+        viewModel.profileName.observe(this) { binding.editTextProfile.setText(it) }
+
         viewModel.uploadStatus.observe(this) { isSuccess ->
-            if (isSuccess) {
-                Toast.makeText(this, "Imagem de perfil atualizada com sucesso!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Falha ao atualizar a imagem de perfil.", Toast.LENGTH_SHORT).show()
-            }
+            Toast.makeText(this, if (isSuccess) "Imagem de perfil atualizada com sucesso!" else "Falha ao atualizar a imagem de perfil.", Toast.LENGTH_SHORT).show()
         }
 
-        // Observe se o upload do nome foi bem-sucedido
         viewModel.uploadNameSuccess.observe(this) { isSuccess ->
-            if (isSuccess) {
-                Toast.makeText(this, "Nome do perfil atualizado com sucesso!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Falha ao atualizar o nome do perfil.", Toast.LENGTH_SHORT).show()
-            }
-            closeKeyboard()
+            Toast.makeText(this, if (isSuccess) "Nome do perfil atualizado com sucesso!" else "Falha ao atualizar o nome do perfil.", Toast.LENGTH_SHORT).show()
             resetRenameSettings()
-
         }
-
     }
 
-    // Reseta o perfil de edição de nome
     private fun resetRenameSettings() {
+        closeKeyboard()
         binding.editTextProfile.clearFocus()
         binding.buttonRename.apply {
             setImageResource(R.drawable.ic_edit)
@@ -139,35 +98,30 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-
     private fun closeKeyboard() {
-        val view = this.currentFocus
+        val view = currentFocus
         if (view != null) {
             val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.hideSoftInputFromWindow(view.windowToken, 0)
+            imm.hideSoftInputFromWindow(view.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
         }
     }
 
-
     private fun requestPermissions() {
-        permissionManager.requestPermission(
-            requestCode = 1,
-            permissions = requiredPermissions
-        )
+        PermissionManager(this) { allGranted ->
+            if (!allGranted) {
+                Toast.makeText(this, "Permissão negada.", Toast.LENGTH_SHORT).show()
+            }
+        }.requestPermission(1, android.Manifest.permission.CAMERA)
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        permissionManager.handlePermissionsResult(requestCode, permissions, grantResults)
+        PermissionManager(this).handlePermissionsResult(requestCode, permissions, grantResults)
     }
 
     private fun configureToolbar() {
         val toolbar = binding.toolbarPrincipal.toolbarPrincipal
-        toolbar.title = "Configurações"
+        toolbar.title = getString(R.string.configurations)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }

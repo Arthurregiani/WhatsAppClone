@@ -12,19 +12,11 @@ class ImageRepository(private val firebaseAuth: FirebaseAuth) {
     suspend fun uploadProfileImage(imageUri: Uri): String? {
         val uid = firebaseAuth.currentUser?.uid ?: return null
         val profileImageRef = storageRef.child("profile_images/$uid.jpg")
-
-        profileImageRef.putFile(imageUri).await()
-        return profileImageRef.downloadUrl.await().toString()
+        return profileImageRef.putFile(imageUri).await().storage.downloadUrl.await().toString()
     }
 
     suspend fun getProfileImageUrl(): String? {
         val uid = firebaseAuth.currentUser?.uid ?: return null
-        val profileImageRef = storageRef.child("profile_images/$uid.jpg")
-
-        return try {
-            profileImageRef.downloadUrl.await().toString()
-        } catch (e: Exception) {
-            null
-        }
+        return storageRef.child("profile_images/$uid.jpg").downloadUrl.await().toString()
     }
 }

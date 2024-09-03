@@ -7,7 +7,7 @@ import androidx.core.content.ContextCompat
 
 class PermissionManager(
     private val activity: Activity,
-    private val callback: (Int, List<String>, List<String>) -> Unit
+    private val callback: (Boolean) -> Unit = {}
 ) {
 
     fun requestPermission(requestCode: Int, vararg permissions: String) {
@@ -16,26 +16,18 @@ class PermissionManager(
         }
 
         if (permissionsNeeded.isNotEmpty()) {
-            // Solicitar as permissões
             activity.requestPermissions(permissionsNeeded.toTypedArray(), requestCode)
         } else {
-            callback(requestCode, permissions.toList(), emptyList())
+            callback(true) // Permissões já concedidas
         }
     }
 
     fun handlePermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        val grantedPermissions = mutableListOf<String>()
-        val deniedPermissions = mutableListOf<String>()
-
-        for ((index, permission) in permissions.withIndex()) {
-            if (grantResults[index] == PackageManager.PERMISSION_GRANTED) {
-                grantedPermissions.add(permission)
-            } else {
-                deniedPermissions.add(permission)
-            }
+        val deniedPermissions = permissions.filterIndexed { index, _ ->
+            grantResults[index] != PackageManager.PERMISSION_GRANTED
         }
 
-        callback(requestCode, grantedPermissions, deniedPermissions)
+        callback(deniedPermissions.isEmpty()) // Retorna true se todas as permissões foram concedidas
 
         if (deniedPermissions.isNotEmpty()) {
             showPermissionDeniedDialog()

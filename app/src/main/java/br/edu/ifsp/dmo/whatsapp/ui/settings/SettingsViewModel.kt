@@ -1,21 +1,24 @@
 package br.edu.ifsp.dmo.whatsapp.ui.settings
 
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.edu.ifsp.dmo.whatsapp.data.repositories.ImageRepository
-import kotlinx.coroutines.launch
-import android.net.Uri
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
+import kotlinx.coroutines.launch
 
-class SettingsViewModel(private val imageRepository: ImageRepository, private val userRepository: UserRepository) : ViewModel() {
+class SettingsViewModel(
+    private val imageRepository: ImageRepository,
+    private val userRepository: UserRepository
+) : ViewModel() {
 
     private val _profileImageUri = MutableLiveData<String?>()
-    val profileImageUri: MutableLiveData<String?> get() = _profileImageUri
+    val profileImageUri: LiveData<String?> get() = _profileImageUri
 
     private val _profileName = MutableLiveData<String?>()
-    val profileName: MutableLiveData<String?> get() = _profileName
+    val profileName: LiveData<String?> get() = _profileName
 
     private val _uploadStatus = MutableLiveData<Boolean>()
     val uploadStatus: LiveData<Boolean> get() = _uploadStatus
@@ -24,40 +27,23 @@ class SettingsViewModel(private val imageRepository: ImageRepository, private va
     val uploadNameSuccess: LiveData<Boolean> get() = _uploadNameSuccess
 
     init {
-        loadProfileImage()
-        loadProfileName()
+        loadProfileData()
     }
 
-    private fun loadProfileImage() {
+    private fun loadProfileData() {
         viewModelScope.launch {
-            try {
-                val imageUrl = imageRepository.getProfileImageUrl()
-                _profileImageUri.postValue(imageUrl)
-            } catch (e: Exception) {
-                _profileImageUri.postValue(null)
+            _profileImageUri.postValue(imageRepository.getProfileImageUrl())
+            userRepository.getDataCurrentUser { userData ->
+                _profileName.postValue(userData?.nome)
             }
         }
     }
-
-    private fun loadProfileName() {
-        viewModelScope.launch {
-            try {
-                userRepository.getDataCurrentUser { userData ->
-                    _profileName.postValue(userData?.nome)
-                }
-            } catch (e: Exception) {
-                _profileName.postValue(null)
-            }
-        }
-    }
-
 
     fun uploadProfileName(name: String) {
         viewModelScope.launch {
             try {
                 userRepository.uploadProfileName(name)
                 _profileName.postValue(name)
-                // Notifica que o upload foi bem-sucedido
                 _uploadNameSuccess.postValue(true)
             } catch (e: Exception) {
                 _uploadNameSuccess.postValue(false)
@@ -68,13 +54,11 @@ class SettingsViewModel(private val imageRepository: ImageRepository, private va
     fun uploadProfileImage(imageUri: Uri) {
         viewModelScope.launch {
             try {
-                val imageUrl = imageRepository.uploadProfileImage(imageUri)
-                _profileImageUri.postValue(imageUrl)
+                _profileImageUri.postValue(imageRepository.uploadProfileImage(imageUri))
                 _uploadStatus.postValue(true)
             } catch (e: Exception) {
                 _uploadStatus.postValue(false)
             }
         }
     }
-
 }
