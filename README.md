@@ -42,7 +42,7 @@ Um aplicativo de mensagens instantâneas que replica a funcionalidade do WhatsAp
 ## 📜 Regras de Segurança do Firebase
 
 As regras de segurança configuradas garantem que somente usuários autenticados possam ler e escrever em seus próprios dados:
-
+Realtime Database rules:
 ```json
 {
   "rules": {
