@@ -3,7 +3,6 @@ package br.edu.ifsp.dmo.whatsapp.utils
 import android.app.Activity
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AlertDialog
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 class PermissionManager(
@@ -17,7 +16,8 @@ class PermissionManager(
         }
 
         if (permissionsNeeded.isNotEmpty()) {
-            ActivityCompat.requestPermissions(activity, permissionsNeeded.toTypedArray(), requestCode)
+            // Solicitar as permissões
+            activity.requestPermissions(permissionsNeeded.toTypedArray(), requestCode)
         } else {
             callback(requestCode, permissions.toList(), emptyList())
         }

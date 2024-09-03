@@ -1,15 +1,17 @@
 package br.edu.ifsp.dmo.whatsapp.ui.settings
 
-import android.content.Intent
-import android.graphics.Bitmap
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import br.edu.ifsp.dmo.whatsapp.R
 import br.edu.ifsp.dmo.whatsapp.data.repositories.ImageRepository
+import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityConfiguracoesBinding
 import br.edu.ifsp.dmo.whatsapp.utils.PermissionManager
 import com.bumptech.glide.Glide
@@ -20,28 +22,18 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityConfiguracoesBinding
     private lateinit var permissionManager: PermissionManager
     private val viewModel: SettingsViewModel by viewModels {
-        SettingsViewModelFactory(ImageRepository(FirebaseAuth.getInstance()))
+        SettingsViewModelFactory(ImageRepository(FirebaseAuth.getInstance()), UserRepository(FirebaseAuth.getInstance()))
     }
 
     private val requiredPermissions = arrayOf(
-        android.Manifest.permission.READ_EXTERNAL_STORAGE,
-        android.Manifest.permission.CAMERA,
-        android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+        android.Manifest.permission.CAMERA
     )
-
-    companion object {
-        const val REQUEST_IMAGE_CAPTURE = 100
-        const val REQUEST_IMAGE_PICK = 200
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityConfiguracoesBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        permissionManager = PermissionManager(this) { requestCode, grantedPermissions, deniedPermissions ->
-//            grantedPermissions.forEach {
-//                Toast.makeText(this, "Permissão concedida: $it", Toast.LENGTH_SHORT).show()
-//            }
+        permissionManager = PermissionManager(this) { _, _, deniedPermissions ->
             deniedPermissions.forEach {
                 Toast.makeText(this, "Permissão negada: $it", Toast.LENGTH_SHORT).show()
             }
@@ -50,42 +42,59 @@ class SettingsActivity : AppCompatActivity() {
         requestPermissions()
         configureToolbar()
         configureButtons()
-        observeViewModel()
+        setupObservers()
     }
+
+
 
     private fun configureButtons() {
         binding.imageButtonGalery.setOnClickListener {
-            val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            startActivityForResult(galleryIntent, REQUEST_IMAGE_PICK)
+            pickImageLauncher.launch("image/*")
         }
 
         binding.imageButtonCam.setOnClickListener {
-            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            if (cameraIntent.resolveActivity(packageManager) != null) {
-                startActivityForResult(cameraIntent, REQUEST_IMAGE_CAPTURE)
+            takePictureLauncher.launch(null)
+        }
+
+        // Configura o listener para o EditText
+        binding.editTextProfile.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                // Altera o ícone do ImageButton e o habilita
+                binding.buttonRename.apply {
+                    setImageResource(R.drawable.ic_check)
+                    isClickable = true
+                    setOnClickListener {
+                        val newName = binding.editTextProfile.text.toString()
+                        viewModel.uploadProfileName(newName)
+                    }
+                }
             }
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == RESULT_OK) {
-            val imageUri: Uri? = data?.data
-            if (requestCode == REQUEST_IMAGE_CAPTURE && data?.extras?.get("data") is Bitmap) {
-                val bitmap = data.extras?.get("data") as Bitmap
-                val tempUri = Uri.parse(MediaStore.Images.Media.insertImage(contentResolver, bitmap, "temp", null))
-                uploadImage(tempUri)
-            } else if (requestCode == REQUEST_IMAGE_PICK && imageUri != null) {
-                uploadImage(imageUri)
-            }
+    private val takePictureLauncher = registerForActivityResult(
+        ActivityResultContracts.TakePicturePreview()
+    ) { bitmap ->
+        bitmap?.let {
+            val tempUri = Uri.parse(MediaStore.Images.Media.insertImage(contentResolver, it, "temp", null))
+            uploadImage(tempUri)
         }
     }
+
+    private val pickImageLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { uploadImage(it) }
+    }
+
 
     private fun uploadImage(imageUri: Uri) {
         viewModel.uploadProfileImage(imageUri)
     }
 
-    private fun observeViewModel() {
+    private fun setupObservers() {
+
+        // Observe se profileImageUri foi atualizado
         viewModel.profileImageUri.observe(this) { uri ->
             uri?.let {
                 Glide.with(this)
@@ -93,8 +102,12 @@ class SettingsActivity : AppCompatActivity() {
                     .placeholder(R.drawable.user_image_default) // Placeholder image
                     .into(binding.profileImage)
             }
+            viewModel.profileName.observe(this){
+                binding.editTextProfile.setText(it)
+            }
         }
 
+        // Observe se o upload da foto foi bem-sucedido
         viewModel.uploadStatus.observe(this) { isSuccess ->
             if (isSuccess) {
                 Toast.makeText(this, "Imagem de perfil atualizada com sucesso!", Toast.LENGTH_SHORT).show()
@@ -102,7 +115,39 @@ class SettingsActivity : AppCompatActivity() {
                 Toast.makeText(this, "Falha ao atualizar a imagem de perfil.", Toast.LENGTH_SHORT).show()
             }
         }
+
+        // Observe se o upload do nome foi bem-sucedido
+        viewModel.uploadNameSuccess.observe(this) { isSuccess ->
+            if (isSuccess) {
+                Toast.makeText(this, "Nome do perfil atualizado com sucesso!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Falha ao atualizar o nome do perfil.", Toast.LENGTH_SHORT).show()
+            }
+            closeKeyboard()
+            resetRenameSettings()
+
+        }
+
     }
+
+    // Reseta o perfil de edição de nome
+    private fun resetRenameSettings() {
+        binding.editTextProfile.clearFocus()
+        binding.buttonRename.apply {
+            setImageResource(R.drawable.ic_edit)
+            isClickable = false
+        }
+    }
+
+
+    private fun closeKeyboard() {
+        val view = this.currentFocus
+        if (view != null) {
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(view.windowToken, 0)
+        }
+    }
+
 
     private fun requestPermissions() {
         permissionManager.requestPermission(

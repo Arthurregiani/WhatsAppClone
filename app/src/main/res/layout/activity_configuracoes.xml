@@ -49,11 +49,13 @@
             android:text="@string/user_name"
             android:textAlignment="viewStart" />
 
-        <ImageView
-            android:id="@+id/imageView"
+        <ImageButton
+            android:id="@+id/button_rename"
             android:layout_width="38dp"
             android:layout_height="match_parent"
             android:contentDescription="@string/edit"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:backgroundTint="?android:attr/colorControlNormal"
             app:srcCompat="@drawable/ic_edit" />
 
     </LinearLayout>

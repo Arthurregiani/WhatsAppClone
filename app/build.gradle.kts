@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "br.edu.ifsp.dmo.whatsapp"
-        minSdk = 28
+        minSdk = 32
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"

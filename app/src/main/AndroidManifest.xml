@@ -1,20 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="true" />
+
+<!--    <uses-permission-->
+<!--        android:name="android.permission.READ_EXTERNAL_STORAGE"-->
+<!--        android:maxSdkVersion="32" />-->
+
+<!--    <uses-permission-->
+<!--        android:name="android.permission.WRITE_EXTERNAL_STORAGE"-->
+<!--        android:maxSdkVersion="32"-->
+<!--        tools:ignore="ScopedStorage" />-->
 
     <uses-permission
-        android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32"
-        tools:ignore="ScopedStorage" />
-    <uses-permission
         android:name="android.permission.CAMERA"
-        tools:ignore="PermissionImpliesUnsupportedChromeOsHardware" />
+        tools:ignore="PermissionImpliesUnsupportedChromeOsHardware"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -25,8 +26,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.WhatsAppClone"
-        tools:targetApi="31">
+        android:theme="@style/Theme.WhatsAppClone">
+
         <activity
             android:name=".ui.settings.SettingsActivity"
             android:exported="false"

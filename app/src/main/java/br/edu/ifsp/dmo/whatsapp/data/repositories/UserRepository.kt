@@ -1,5 +1,6 @@
 package br.edu.ifsp.dmo.whatsapp.data.repositories
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import br.edu.ifsp.dmo.whatsapp.data.model.User
@@ -38,8 +39,7 @@ class UserRepository(private val auth: FirebaseAuth) {
     }
 
     fun cadastrarUsuarioDatabase(uid: String, user: User) {
-        // Salvar apenas o nome e o email no Firebase Realtime Database
-        // com base no UID do usuário autenticado
+        // Salvar com base no UID do usuário autenticado
         val usuariosRef = database.getReference("users")
         usuariosRef.child(uid).setValue(user)
     }
@@ -58,4 +58,31 @@ class UserRepository(private val auth: FirebaseAuth) {
     fun logout() {
         auth.signOut()
     }
+
+    fun getDataCurrentUser(callback: (User?) -> Unit) {
+        val firebaseUser = auth.currentUser
+        if (firebaseUser != null) {
+            val uid = firebaseUser.uid
+            val usuariosRef = database.getReference("users").child(uid)
+
+            usuariosRef.get().addOnSuccessListener { dataSnapshot ->
+                val user = dataSnapshot.getValue(User::class.java)
+                callback(user)  // Retorna o usuário encontrado
+            }.addOnFailureListener { exception ->
+                Log.e("UserRepository", "Erro ao obter dados do usuário: ${exception.message}")
+                callback(null)  // Em caso de erro, retorna null
+            }
+        } else {
+            callback(null)  // Se o usuário não estiver autenticado, retorna null
+        }
+    }
+
+
+    fun uploadProfileName(name: String) {
+        val usuariosRef = database.getReference("users")
+        val firebaseUserUid = auth.currentUser?.uid.toString()
+        usuariosRef.child(firebaseUserUid).child("nome").setValue(name)
+
+    }
+
 }
