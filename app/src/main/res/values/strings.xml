@@ -16,5 +16,7 @@
     <string name="edit">edit</string>
     <string name="textViewUsername">Esse não é seu nomde de usuário. Esse nome será exibido para seus contatos do whatsapp.</string>
     <string name="configurations">Configurações</string>
+    <string name="contactName">Name</string>
+    <string name="contactEmail">email</string>
 
 </resources>
