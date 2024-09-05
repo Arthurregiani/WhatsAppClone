@@ -5,12 +5,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import br.edu.ifsp.dmo.whatsapp.data.repositories.ImageRepository
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-    private val imageRepository: ImageRepository,
     private val userRepository: UserRepository
 ) : ViewModel() {
 
@@ -32,7 +30,7 @@ class SettingsViewModel(
 
     private fun loadProfileData() {
         viewModelScope.launch {
-            _profileImageUri.postValue(imageRepository.getProfileImageUrl())
+            _profileImageUri.postValue(userRepository.getProfileImageUrl())
             userRepository.getDataCurrentUser { userData ->
                 _profileName.postValue(userData?.nome)
             }
@@ -54,7 +52,7 @@ class SettingsViewModel(
     fun uploadProfileImage(imageUri: Uri) {
         viewModelScope.launch {
             try {
-                _profileImageUri.postValue(imageRepository.uploadProfileImage(imageUri))
+                _profileImageUri.postValue(userRepository.uploadProfileImage(imageUri))
                 _uploadStatus.postValue(true)
             } catch (e: Exception) {
                 _uploadStatus.postValue(false)

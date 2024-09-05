@@ -10,7 +10,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import br.edu.ifsp.dmo.whatsapp.R
-import br.edu.ifsp.dmo.whatsapp.data.repositories.ImageRepository
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityConfiguracoesBinding
 import br.edu.ifsp.dmo.whatsapp.utils.PermissionManager
@@ -21,7 +20,7 @@ class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityConfiguracoesBinding
     private val viewModel: SettingsViewModel by viewModels {
-        SettingsViewModelFactory(ImageRepository(FirebaseAuth.getInstance()), UserRepository(FirebaseAuth.getInstance()))
+        SettingsViewModelFactory(UserRepository(FirebaseAuth.getInstance()))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
