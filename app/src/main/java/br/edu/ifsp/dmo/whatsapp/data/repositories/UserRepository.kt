@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import br.edu.ifsp.dmo.whatsapp.data.model.Contact
 import br.edu.ifsp.dmo.whatsapp.data.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -25,17 +26,14 @@ class UserRepository(private val auth: FirebaseAuth) {
         }
     }
 
-    // Método auxiliar para obter o UID do usuário atual
     private fun getCurrentUserUid(): String? {
         return auth.currentUser?.uid
     }
 
-    // Método auxiliar para lidar com falhas de operação
     private fun handleFailure(tag: String, e: Exception) {
         Log.e(tag, "Erro: ${e.message}")
     }
 
-    // Método para cadastrar autenticação do usuário
     fun cadastrarAutenticacaoUsuario(email: String, password: String, callback: (Boolean, String?, String?) -> Unit) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
@@ -47,9 +45,9 @@ class UserRepository(private val auth: FirebaseAuth) {
             }
     }
 
-    // Método para cadastrar usuário no Firestore
     fun cadastrarUsuarioDatabase(uid: String, user: User) {
-        usersCollection.document(uid).set(user)
+        val userDocument = usersCollection.document(uid)
+        userDocument.set(user)
             .addOnSuccessListener {
                 Log.d("UserRepository", "Usuário cadastrado com sucesso no Firestore.")
             }
@@ -58,7 +56,6 @@ class UserRepository(private val auth: FirebaseAuth) {
             }
     }
 
-    // Método para validar autenticação
     fun validarAutenticacao(email: String, senha: String, callback: (Boolean, String?) -> Unit) {
         auth.signInWithEmailAndPassword(email, senha)
             .addOnCompleteListener { task ->
@@ -70,15 +67,14 @@ class UserRepository(private val auth: FirebaseAuth) {
             }
     }
 
-    // Método para realizar logout
     fun logout() {
         auth.signOut()
     }
 
-    // Método para obter dados do usuário autenticado
     fun getDataCurrentUser(callback: (User?) -> Unit) {
         getCurrentUserUid()?.let { uid ->
-            usersCollection.document(uid).get()
+            val userDocument = usersCollection.document(uid)
+            userDocument.get()
                 .addOnSuccessListener { documentSnapshot ->
                     val user = documentSnapshot.toObject(User::class.java)
                     callback(user)
@@ -90,10 +86,10 @@ class UserRepository(private val auth: FirebaseAuth) {
         } ?: callback(null)
     }
 
-    // Método para atualizar o nome do perfil
     fun uploadProfileName(name: String) {
         getCurrentUserUid()?.let { uid ->
-            usersCollection.document(uid).update("nome", name)
+            val userDocument = usersCollection.document(uid)
+            userDocument.update("nome", name)
                 .addOnSuccessListener {
                     Log.d("UserRepository", "Nome atualizado com sucesso no Firestore.")
                 }
@@ -103,22 +99,14 @@ class UserRepository(private val auth: FirebaseAuth) {
         }
     }
 
-    // -------------------
-    // Integração com Firebase Storage e Firestore para imagem de perfil
-    // -------------------
-
-    // Upload da imagem de perfil no Firebase Storage e salva o URL no Firestore
     suspend fun uploadProfileImage(imageUri: Uri): String? {
         val uid = getCurrentUserUid() ?: return null
         val profileImageRef = storageRef.child("profile_images/$uid.jpg")
 
         return try {
-            // Upload da imagem
             val downloadUrl = profileImageRef.putFile(imageUri).await().storage.downloadUrl.await().toString()
-
-            // Salvar o URL no Firestore sob o documento do usuário
-            usersCollection.document(uid).update("profileImageUrl", downloadUrl).await()
-
+            val userDocument = usersCollection.document(uid)
+            userDocument.update("profileImageUrl", downloadUrl).await()
             downloadUrl
         } catch (e: Exception) {
             handleFailure("UserRepository", e)
@@ -126,19 +114,78 @@ class UserRepository(private val auth: FirebaseAuth) {
         }
     }
 
-    // Recupera o URL da imagem de perfil a partir do Firestore
     suspend fun getProfileImageUrl(): String? {
         val uid = getCurrentUserUid() ?: return null
 
         return try {
-            // Tenta obter o documento do usuário no Firestore
             val userDoc = usersCollection.document(uid).get().await()
-
-            // Verifica se o campo profileImageUrl existe no Firestore
             userDoc.getString("profileImageUrl")
         } catch (e: Exception) {
             handleFailure("UserRepository", e)
             null
         }
     }
+
+    suspend fun getUidByEmail(email: String): String? {
+        return try {
+            val querySnapshot = usersCollection.whereEqualTo("email", email).get().await()
+            if (!querySnapshot.isEmpty) {
+                querySnapshot.documents.firstOrNull()?.id
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            handleFailure("UserRepository", e)
+            null
+        }
+    }
+
+    // Adicionando contato ao Firestore
+    suspend fun addContact(contactEmail: String): Boolean {
+        val uid = getCurrentUserUid() ?: return false
+
+        return try {
+            val contactUid = getUidByEmail(contactEmail)
+            if (contactUid != null) {
+                val contactData = usersCollection.document(contactUid).get().await()
+                val contactName = contactData.getString("nome") ?: "Nome desconhecido"
+
+                val userDocument = usersCollection.document(uid)
+                val contactInfo = mapOf(
+                    "nome" to contactName,
+                    "email" to contactEmail
+                )
+                userDocument.update("contacts.$contactUid", contactInfo).await()
+
+                Log.d("UserRepository", "Contato adicionado com sucesso.")
+                return true
+            } else {
+                Log.d("UserRepository", "Contato não encontrado.")
+                return false
+            }
+        } catch (e: Exception) {
+            handleFailure("UserRepository", e)
+            return false
+        }
+    }
+
+    // UserRepository.kt
+    suspend fun getContacts(): List<Contact> {
+        val uid = getCurrentUserUid() ?: return emptyList()
+
+        return try {
+            val userDocument = usersCollection.document(uid).get().await()
+            val contactsMap = userDocument.get("contacts") as? Map<String, Map<String, String>>
+            contactsMap?.map { (contactUid, contactInfo) ->
+                val contactName = contactInfo["nome"] ?: "Nome desconhecido"
+                val contactEmail = contactInfo["email"] ?: ""
+                val profileImageUrl = usersCollection.document(contactUid).get().await().getString("profileImageUrl")
+                Contact(nome = contactName, email = contactEmail, profileImageUrl = profileImageUrl)
+            } ?: emptyList()
+        } catch (e: Exception) {
+            handleFailure("UserRepository", e)
+            emptyList()
+        }
+    }
+
 }

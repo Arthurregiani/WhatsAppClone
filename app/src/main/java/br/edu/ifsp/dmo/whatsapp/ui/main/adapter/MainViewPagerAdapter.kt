@@ -3,8 +3,8 @@ package br.edu.ifsp.dmo.whatsapp.ui.main.adapter
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import br.edu.ifsp.dmo.whatsapp.ui.main.fragments.FragmentContacts
-import br.edu.ifsp.dmo.whatsapp.ui.main.fragments.FragmentConversations
+import br.edu.ifsp.dmo.whatsapp.ui.main.fragments.contacts.FragmentContacts
+import br.edu.ifsp.dmo.whatsapp.ui.main.fragments.Conversations.FragmentConversations
 
 class MainViewPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
 

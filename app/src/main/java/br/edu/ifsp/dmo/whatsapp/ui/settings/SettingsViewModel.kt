@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.edu.ifsp.dmo.whatsapp.data.model.Contact
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import kotlinx.coroutines.launch
 
@@ -35,6 +36,7 @@ class SettingsViewModel(
                 _profileName.postValue(userData?.nome)
             }
         }
+
     }
 
     fun uploadProfileName(name: String) {
