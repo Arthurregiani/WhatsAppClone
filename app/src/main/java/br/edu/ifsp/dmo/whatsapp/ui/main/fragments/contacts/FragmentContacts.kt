@@ -1,5 +1,6 @@
 package br.edu.ifsp.dmo.whatsapp.ui.main.fragments.contacts
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,7 +15,9 @@ import br.edu.ifsp.dmo.whatsapp.R
 import br.edu.ifsp.dmo.whatsapp.data.model.Contact
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import br.edu.ifsp.dmo.whatsapp.databinding.FragmentContactsBinding
+import br.edu.ifsp.dmo.whatsapp.ui.login.LoginActivity
 import br.edu.ifsp.dmo.whatsapp.ui.main.adapter.ContactAdapter
+import br.edu.ifsp.dmo.whatsapp.ui.main.fragments.conversations.chat.ChatActivity
 import com.google.firebase.auth.FirebaseAuth
 
 class FragmentContacts : Fragment() {
@@ -33,8 +36,10 @@ class FragmentContacts : Fragment() {
         val factory = ContactViewModelFactory(UserRepository(FirebaseAuth.getInstance()))
         contactViewModel = ViewModelProvider(this, factory)[ContactViewModel::class.java]
 
-        // Configurar o RecyclerView
-        contactAdapter = ContactAdapter()
+        // Configurar o RecyclerView com o listener de cliques
+        contactAdapter = ContactAdapter { contact ->
+            onContactClick(contact)
+        }
         binding.RecyclerViewContacts.layoutManager = LinearLayoutManager(requireContext())
         binding.RecyclerViewContacts.adapter = contactAdapter
 
@@ -79,6 +84,15 @@ class FragmentContacts : Fragment() {
             .setNegativeButton("Cancelar", null)
             .show()
     }
+
+    private fun onContactClick(contact: Contact) {
+        val intent = Intent(requireContext(), ChatActivity::class.java).apply {
+            putExtra("contactName", contact.nome)
+            putExtra("contactProfileImageUrl", contact.profileImageUrl)
+        }
+        startActivity(intent)
+    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

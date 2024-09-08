@@ -8,7 +8,7 @@ import br.edu.ifsp.dmo.whatsapp.data.model.Contact
 import br.edu.ifsp.dmo.whatsapp.databinding.ItemContactBinding
 import com.bumptech.glide.Glide
 
-class ContactAdapter : RecyclerView.Adapter<ContactAdapter.ContactViewHolder>() {
+class ContactAdapter(private val onContactClick: (Contact) -> Unit) : RecyclerView.Adapter<ContactAdapter.ContactViewHolder>() {
 
     private var contacts: List<Contact> = listOf()
 
@@ -20,6 +20,9 @@ class ContactAdapter : RecyclerView.Adapter<ContactAdapter.ContactViewHolder>() 
     override fun onBindViewHolder(holder: ContactViewHolder, position: Int) {
         val contact = contacts[position]
         holder.bind(contact)
+        holder.itemView.setOnClickListener {
+            onContactClick(contact)
+        }
     }
 
     override fun getItemCount(): Int = contacts.size
@@ -37,9 +40,7 @@ class ContactAdapter : RecyclerView.Adapter<ContactAdapter.ContactViewHolder>() 
 
             // Carregar a imagem de perfil usando Glide
             Glide.with(itemView.context)
-                .load(
-                    contact.profileImageUrl ?: R.drawable.user_image_default
-                ) // Usar uma imagem padrão se a URL for nula
+                .load(contact.profileImageUrl ?: R.drawable.user_image_default) // Usar uma imagem padrão se a URL for nula
                 .into(binding.contactProfileImage)
         }
     }

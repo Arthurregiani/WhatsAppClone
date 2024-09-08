@@ -26,7 +26,9 @@
         <activity
             android:name=".ui.main.fragments.conversations.chat.ChatActivity"
             android:parentActivityName=".ui.main.MainActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/StyleWhatsApp"
+            />
         <activity
             android:name=".ui.settings.SettingsActivity"
             android:exported="false"
