@@ -1,4 +1,4 @@
-package br.edu.ifsp.dmo.whatsapp.ui.main.adapter
+package br.edu.ifsp.dmo.whatsapp.ui.main.fragments.contacts
 
 import android.view.LayoutInflater
 import android.view.ViewGroup

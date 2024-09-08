@@ -1,4 +1,4 @@
-package br.edu.ifsp.dmo.whatsapp.ui.main.adapter
+package br.edu.ifsp.dmo.whatsapp.ui.main
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity

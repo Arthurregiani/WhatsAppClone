@@ -15,8 +15,6 @@ import br.edu.ifsp.dmo.whatsapp.R
 import br.edu.ifsp.dmo.whatsapp.data.model.Contact
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import br.edu.ifsp.dmo.whatsapp.databinding.FragmentContactsBinding
-import br.edu.ifsp.dmo.whatsapp.ui.login.LoginActivity
-import br.edu.ifsp.dmo.whatsapp.ui.main.adapter.ContactAdapter
 import br.edu.ifsp.dmo.whatsapp.ui.main.fragments.conversations.chat.ChatActivity
 import com.google.firebase.auth.FirebaseAuth
 
@@ -88,6 +86,7 @@ class FragmentContacts : Fragment() {
     private fun onContactClick(contact: Contact) {
         val intent = Intent(requireContext(), ChatActivity::class.java).apply {
             putExtra("contactName", contact.nome)
+            putExtra("contactEmail", contact.email)
             putExtra("contactProfileImageUrl", contact.profileImageUrl)
         }
         startActivity(intent)

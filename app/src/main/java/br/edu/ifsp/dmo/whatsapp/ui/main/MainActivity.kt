@@ -9,7 +9,6 @@ import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityMainBinding
 import br.edu.ifsp.dmo.whatsapp.ui.settings.SettingsActivity
 import br.edu.ifsp.dmo.whatsapp.ui.login.LoginActivity
-import br.edu.ifsp.dmo.whatsapp.ui.main.adapter.MainViewPagerAdapter
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
 

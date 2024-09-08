@@ -26,7 +26,7 @@ class UserRepository(private val auth: FirebaseAuth) {
         }
     }
 
-    private fun getCurrentUserUid(): String? {
+    fun getCurrentUserUid(): String? {
         return auth.currentUser?.uid
     }
 
