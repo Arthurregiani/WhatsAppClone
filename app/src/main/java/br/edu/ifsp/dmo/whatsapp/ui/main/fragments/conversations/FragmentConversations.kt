@@ -1,4 +1,4 @@
-package br.edu.ifsp.dmo.whatsapp.ui.main.fragments.Conversations
+package br.edu.ifsp.dmo.whatsapp.ui.main.fragments.conversations
 
 import android.os.Bundle
 import android.view.LayoutInflater

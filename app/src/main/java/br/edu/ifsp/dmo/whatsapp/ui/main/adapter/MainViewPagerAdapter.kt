@@ -4,7 +4,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import br.edu.ifsp.dmo.whatsapp.ui.main.fragments.contacts.FragmentContacts
-import br.edu.ifsp.dmo.whatsapp.ui.main.fragments.Conversations.FragmentConversations
+import br.edu.ifsp.dmo.whatsapp.ui.main.fragments.conversations.FragmentConversations
 
 class MainViewPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
 
