@@ -5,7 +5,7 @@ Um aplicativo de mensagens instantâneas que replica a funcionalidade do WhatsAp
 ## 📦 Funcionalidades
 
 - **Autenticação de Usuários**: Cadastro e login com Firebase Authentication.
-- **Mensagens**: Envio e recebimento de mensagens em tempo real. (Em desenvolvimento)
+- **Mensagens**: Envio e recebimento de mensagens em tempo real.
 - **Perfil do Usuário**: Configuração e atualização de foto de perfil.
 - **Permissões**: Gerenciamento de permissões para câmera e armazenamento.
 - **Interface de Usuário**: Layouts responsivos e interativos utilizando Material Design e Glide para carregamento de imagens.
