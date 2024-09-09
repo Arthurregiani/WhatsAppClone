@@ -8,17 +8,14 @@ import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 class ChatViewModelFactory(
     private val chatRepository: ChatRepository,
     private val userRepository: UserRepository,
-    private val nameContact: String,
-    private val profileImageUrlcontact: String
+    private val contactName: String,
+    private val contactProfileImageUrl: String?
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ChatViewModel::class.java)) {
-            return ChatViewModel(chatRepository, userRepository).apply {
-                this.contactName.value = nameContact
-                this.contactProfileImageUrl.value = profileImageUrlcontact
-            } as T
+            return ChatViewModel(chatRepository, userRepository, contactName, contactProfileImageUrl) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

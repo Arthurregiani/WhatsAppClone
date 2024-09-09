@@ -84,4 +84,24 @@ class ChatRepository {
         }
     }
 
+    suspend fun getOrCreateChat(participants: List<String>): String? {
+        return try {
+            // Procura chats que contêm todos os participantes
+            val querySnapshot = chatsCollection
+                .whereEqualTo("participants", participants.associateWith { true })
+                .get()
+                .await()
+
+            if (querySnapshot.documents.isNotEmpty()) {
+                // Retorna o ID do primeiro chat encontrado
+                querySnapshot.documents.first().id
+            } else {
+                // Se não encontrou, cria um novo chat
+                createChat(participants)
+            }
+        } catch (e: Exception) {
+            handleFailure("ChatRepository", e)
+            null
+        }
+    }
 }

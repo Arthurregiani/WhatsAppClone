@@ -9,10 +9,11 @@ import br.edu.ifsp.dmo.whatsapp.data.repositories.ChatRepository
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import kotlinx.coroutines.launch
 
-
 class ChatViewModel(
     private val chatRepository: ChatRepository,
-    val userRepository: UserRepository
+    val userRepository: UserRepository,
+    contactName: String,
+    contactProfileImageUrl: String?
 ) : ViewModel() {
 
     private val _messages = MutableLiveData<List<Message>>()
@@ -21,17 +22,19 @@ class ChatViewModel(
     private val _chatId = MutableLiveData<String?>()
     val chatId: LiveData<String?> get() = _chatId
 
-    val contactName = MutableLiveData<String>()
-    val contactProfileImageUrl = MutableLiveData<String>()
+    val contactName = MutableLiveData<String>().apply { value = contactName }
+    val contactProfileImageUrl = MutableLiveData<String?>().apply { value = contactProfileImageUrl }
 
-    fun createChat(participants: List<String>, callback: (String?) -> Unit) {
+    fun checkOrCreateChat(contactEmail: String) {
         viewModelScope.launch {
-            val chatId = chatRepository.createChat(participants)
+            val currentUserId = userRepository.getCurrentUserUid() ?: return@launch
+            val contactUserId = userRepository.getUidByEmail(contactEmail) ?: return@launch
+
+            val participants = listOf(currentUserId, contactUserId)
+            val chatId = chatRepository.getOrCreateChat(participants)
+
             _chatId.postValue(chatId)
-            callback(chatId)
-            if (chatId != null) {
-                observeMessages(chatId)
-            }
+            chatId?.let { observeMessages(it) } // Carrega mensagens se o chatId estiver disponível
         }
     }
 
@@ -56,7 +59,6 @@ class ChatViewModel(
                 _messages.postValue(messagesList)
             }
     }
-
 
     private fun handleFailure(tag: String, e: Exception) {
         // Handle the error appropriately

@@ -45,6 +45,9 @@ class ChatActivity : AppCompatActivity() {
 
         setupUI()
 
+        // Check or create chat and load messages
+        chatViewModel.checkOrCreateChat(contactEmail)
+
         binding.buttonSend.setOnClickListener {
             sendMessage(contactEmail)
         }
@@ -72,9 +75,11 @@ class ChatActivity : AppCompatActivity() {
         })
 
         chatViewModel.contactProfileImageUrl.observe(this, Observer { imageUrl ->
-            Glide.with(this)
-                .load(imageUrl.ifEmpty { R.drawable.user_image_default })
-                .into(binding.contactProfileImage)
+            if (imageUrl != null) {
+                Glide.with(this)
+                    .load(imageUrl.ifEmpty { R.drawable.user_image_default })
+                    .into(binding.contactProfileImage)
+            }
         })
     }
 
@@ -89,22 +94,12 @@ class ChatActivity : AppCompatActivity() {
 
         if (messageText.isNotEmpty()) {
             CoroutineScope(Dispatchers.IO).launch {
-                val contactUserId = chatViewModel.userRepository.getUidByEmail(contactEmail)
+                val chatId = chatViewModel.chatId.value
                 val currentUserId = chatViewModel.userRepository.getCurrentUserUid()
 
-                if (contactUserId != null && currentUserId != null) {
-                    val participants = listOf(currentUserId, contactUserId)
-                    val existingChatId = chatViewModel.chatId.value
-
-                    if (existingChatId == null) {
-                        chatViewModel.createChat(participants) { chatId ->
-                            chatId?.let {
-                                chatViewModel.sendMessage(it, messageText, currentUserId)
-                                clearInputField()
-                            }
-                        }
-                    } else {
-                        chatViewModel.sendMessage(existingChatId, messageText, currentUserId)
+                chatId?.let {
+                    if (currentUserId != null) {
+                        chatViewModel.sendMessage(it, messageText, currentUserId)
                         clearInputField()
                     }
                 }
