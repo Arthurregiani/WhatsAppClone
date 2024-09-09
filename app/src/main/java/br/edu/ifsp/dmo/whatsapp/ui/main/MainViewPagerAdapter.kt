@@ -8,14 +8,16 @@ import br.edu.ifsp.dmo.whatsapp.ui.main.fragments.conversations.FragmentConversa
 
 class MainViewPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
 
+    // Retorna o número total de abas
     override fun getItemCount(): Int {
-        return 2 // Número de abas
+        return 2 // Número de abas: "Conversas" e "Contatos"
     }
 
+    // Cria e retorna o Fragmento baseado na posição
     override fun createFragment(position: Int): Fragment {
         return when (position) {
-            0 -> FragmentConversations() // Fragmento da aba "Conversas"
-            1 -> FragmentContacts()      // Fragmento da aba "Contatos"
+            0 -> FragmentConversations()
+            1 -> FragmentContacts()
             else -> throw IllegalStateException("Posição desconhecida: $position")
         }
     }

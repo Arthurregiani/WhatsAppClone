@@ -16,15 +16,19 @@ class ChatViewModel(
     contactProfileImageUrl: String?
 ) : ViewModel() {
 
+    // LiveData para observar a lista de mensagens
     private val _messages = MutableLiveData<List<Message>>()
     val messages: LiveData<List<Message>> get() = _messages
 
+    // LiveData para observar o ID do chat
     private val _chatId = MutableLiveData<String?>()
     val chatId: LiveData<String?> get() = _chatId
 
+    // LiveData para observar o nome e a URL da imagem de perfil do contato
     val contactName = MutableLiveData<String>().apply { value = contactName }
     val contactProfileImageUrl = MutableLiveData<String?>().apply { value = contactProfileImageUrl }
 
+    // Verifica se o chat existe e cria um novo se necessário
     fun checkOrCreateChat(contactEmail: String) {
         viewModelScope.launch {
             val currentUserId = userRepository.getCurrentUserUid() ?: return@launch
@@ -34,10 +38,11 @@ class ChatViewModel(
             val chatId = chatRepository.getOrCreateChat(participants)
 
             _chatId.postValue(chatId)
-            chatId?.let { observeMessages(it) } // Carrega mensagens se o chatId estiver disponível
+            chatId?.let { observeMessages(it) }
         }
     }
 
+    // Envia uma mensagem para o chat
     fun sendMessage(chatId: String, messageText: String, senderId: String) {
         val message = Message(senderId, messageText, System.currentTimeMillis())
         viewModelScope.launch {
@@ -45,9 +50,10 @@ class ChatViewModel(
         }
     }
 
+    // Observa as mensagens do chat em tempo real
     fun observeMessages(chatId: String) {
         chatRepository.getMessagesCollection(chatId)
-            .orderBy("timestamp") // Ordena as mensagens pelo timestamp em ordem crescente
+            .orderBy("timestamp")
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     handleFailure("ChatViewModel", e)
@@ -60,8 +66,8 @@ class ChatViewModel(
             }
     }
 
+    // Método para lidar com falhas
     private fun handleFailure(tag: String, e: Exception) {
-        // Handle the error appropriately
         println("Erro no $tag: ${e.message}")
     }
 }

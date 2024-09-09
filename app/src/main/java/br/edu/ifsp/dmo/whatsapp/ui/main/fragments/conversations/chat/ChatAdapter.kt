@@ -19,15 +19,18 @@ class ChatAdapter(private var messages: List<Message>) : RecyclerView.Adapter<Re
         private const val VIEW_TYPE_RECEIVED = 2
     }
 
+    // Atualiza a lista de mensagens e notifica o RecyclerView
     fun updateMessages(newMessages: List<Message>) {
         this.messages = newMessages
         notifyDataSetChanged()
     }
 
+    // Retorna o tipo de visualização (enviado ou recebido) com base no ID do remetente
     override fun getItemViewType(position: Int): Int {
         return if (messages[position].senderId == currentUserUid) VIEW_TYPE_SENT else VIEW_TYPE_RECEIVED
     }
 
+    // Cria o ViewHolder adequado com base no tipo de visualização
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return if (viewType == VIEW_TYPE_SENT) {
             val binding = ItemMessageSentBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -38,17 +41,18 @@ class ChatAdapter(private var messages: List<Message>) : RecyclerView.Adapter<Re
         }
     }
 
+    // Associa os dados de uma mensagem ao ViewHolder apropriado
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val message = messages[position]
-        if (holder is SentMessageViewHolder) {
-            holder.bind(message)
-        } else if (holder is ReceivedMessageViewHolder) {
-            holder.bind(message)
+        when (holder) {
+            is SentMessageViewHolder -> holder.bind(message)
+            is ReceivedMessageViewHolder -> holder.bind(message)
         }
     }
 
     override fun getItemCount(): Int = messages.size
 
+    // ViewHolder para mensagens enviadas
     inner class SentMessageViewHolder(private val binding: ItemMessageSentBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(message: Message) {
             binding.textViewMessage.text = message.messageText
@@ -56,6 +60,7 @@ class ChatAdapter(private var messages: List<Message>) : RecyclerView.Adapter<Re
         }
     }
 
+    // ViewHolder para mensagens recebidas
     inner class ReceivedMessageViewHolder(private val binding: ItemMessageReceivedBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(message: Message) {
             binding.textViewMessage.text = message.messageText
@@ -63,8 +68,9 @@ class ChatAdapter(private var messages: List<Message>) : RecyclerView.Adapter<Re
         }
     }
 
+    // Formata o timestamp para o formato de hora de 24 horas
     private fun formatTimestamp(timestamp: Long): String {
-        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault()) // Formato de hora de 24 horas
+        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
         return sdf.format(timestamp)
     }
 }

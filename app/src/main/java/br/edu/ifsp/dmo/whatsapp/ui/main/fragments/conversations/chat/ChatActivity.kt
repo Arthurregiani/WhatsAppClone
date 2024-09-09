@@ -6,9 +6,9 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import br.edu.ifsp.dmo.whatsapp.R
-import br.edu.ifsp.dmo.whatsapp.databinding.ActivityChatBinding
 import br.edu.ifsp.dmo.whatsapp.data.repositories.ChatRepository
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
+import br.edu.ifsp.dmo.whatsapp.databinding.ActivityChatBinding
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -26,90 +26,102 @@ class ChatActivity : AppCompatActivity() {
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupViewModel()
+        setupUI()
+        setupObservers()
+
+        chatViewModel.checkOrCreateChat(getContactEmail())
+    }
+
+    // Configura o ViewModel com repositórios e dados do contato
+    private fun setupViewModel() {
         val chatRepository = ChatRepository()
         val userRepository = UserRepository(FirebaseAuth.getInstance())
+        val factory = ChatViewModelFactory(
+            chatRepository,
+            userRepository,
+            getContactName(),
+            getContactProfileImageUrl()
+        )
+        chatViewModel = ViewModelProvider(this, factory).get(ChatViewModel::class.java)
+    }
 
-        // Initialize adapter once
+    // Configura a interface do usuário, incluindo RecyclerView e botão de enviar mensagem
+    private fun setupUI() {
         chatAdapter = ChatAdapter(emptyList())
         binding.recyclerViewMessages.apply {
             layoutManager = LinearLayoutManager(this@ChatActivity)
             adapter = chatAdapter
         }
 
-        val contactName = intent.getStringExtra("contactName") ?: ""
-        val contactProfileImageUrl = intent.getStringExtra("contactProfileImageUrl") ?: ""
-        val contactEmail = intent.getStringExtra("contactEmail") ?: ""
-
-        val factory = ChatViewModelFactory(chatRepository, userRepository, contactName, contactProfileImageUrl)
-        chatViewModel = ViewModelProvider(this, factory)[ChatViewModel::class.java]
-
-        setupUI()
-
-        // Check or create chat and load messages
-        chatViewModel.checkOrCreateChat(contactEmail)
+        configureToolbar()
 
         binding.buttonSend.setOnClickListener {
-            sendMessage(contactEmail)
+            sendMessage(getContactEmail())
         }
+    }
 
-        // Observe messages
+    // Configura observadores para mudanças no ViewModel
+    private fun setupObservers() {
         chatViewModel.messages.observe(this, Observer { messages ->
-            val sortedMessages = messages.sortedBy { it.timestamp } // Ordena as mensagens pelo timestamp
+            val sortedMessages = messages.sortedBy { it.timestamp }
             chatAdapter.updateMessages(sortedMessages)
             binding.recyclerViewMessages.scrollToPosition(sortedMessages.size - 1)
         })
 
-        // Observe chatId and load messages
         chatViewModel.chatId.observe(this, Observer { chatId ->
             chatId?.let {
-                chatViewModel.observeMessages(it) // Start observing messages when chatId is available
+                chatViewModel.observeMessages(it)
             }
         })
-    }
-
-    private fun setupUI() {
-        configureToolbar()
 
         chatViewModel.contactName.observe(this, Observer { name ->
             binding.textContactName.text = name
         })
 
         chatViewModel.contactProfileImageUrl.observe(this, Observer { imageUrl ->
-            if (imageUrl != null) {
-                Glide.with(this)
-                    .load(imageUrl.ifEmpty { R.drawable.user_image_default })
-                    .into(binding.contactProfileImage)
-            }
+            Glide.with(this)
+                .load(imageUrl ?: R.drawable.user_image_default)
+                .into(binding.contactProfileImage)
         })
     }
 
+    // Configura a toolbar
     private fun configureToolbar() {
         setSupportActionBar(binding.toolbarPrincipal.toolbarPrincipal)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.apply {
+            setDisplayShowTitleEnabled(false)
+            setDisplayHomeAsUpEnabled(true)
+        }
     }
 
+    // Envia uma mensagem para o chat
     private fun sendMessage(contactEmail: String) {
         val messageText = binding.editTextSend.text.toString().trim()
-
         if (messageText.isNotEmpty()) {
             CoroutineScope(Dispatchers.IO).launch {
-                val chatId = chatViewModel.chatId.value
-                val currentUserId = chatViewModel.userRepository.getCurrentUserUid()
-
-                chatId?.let {
-                    if (currentUserId != null) {
-                        chatViewModel.sendMessage(it, messageText, currentUserId)
-                        clearInputField()
-                    }
+                chatViewModel.chatId.value?.let { chatId ->
+                    chatViewModel.sendMessage(
+                        chatId,
+                        messageText,
+                        chatViewModel.userRepository.getCurrentUserUid() ?: return@launch
+                    )
+                    clearInputField()
                 }
             }
         }
     }
 
+    // Limpa o campo de entrada de mensagem
     private fun clearInputField() {
         runOnUiThread {
             binding.editTextSend.text.clear()
         }
     }
+
+    // Métodos para obter dados do Intent
+    private fun getContactName() = intent.getStringExtra("contactName") ?: ""
+    private fun getContactProfileImageUrl() = intent.getStringExtra("contactProfileImageUrl")
+    private fun getContactEmail() = intent.getStringExtra("contactEmail") ?: ""
+
 }

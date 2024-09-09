@@ -28,9 +28,11 @@ class RegistrationActivity : AppCompatActivity() {
         viewModel.cadastroStatus.observe(this) { result ->
             val (sucesso, mensagemErro) = result
             if (sucesso) {
+                // Mostrar mensagem de sucesso e abrir a tela de login
                 Toast.makeText(this, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show()
                 abrirTelaLogin()
             } else {
+                // Mostrar mensagem de erro
                 Toast.makeText(this, "Falha no cadastro: $mensagemErro", Toast.LENGTH_SHORT).show()
             }
         }
@@ -39,17 +41,21 @@ class RegistrationActivity : AppCompatActivity() {
     }
 
     private fun setClickListeners() {
+        // Configurar o listener para o botão de cadastro
         binding.buttonCadastrar.setOnClickListener {
             val userName = binding.editTextNome.text.toString()
             val email = binding.editTextEmail.text.toString()
             val senha = binding.editTextSenha.text.toString()
+
             if (validarDados(userName, email, senha)) {
+                // Chamar o método de cadastro no ViewModel
                 viewModel.cadastrarUsuario(userName, email, senha)
             }
         }
     }
 
     private fun abrirTelaLogin() {
+        // Abrir a tela de login e finalizar a atividade atual
         val intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
         finish()
@@ -59,14 +65,17 @@ class RegistrationActivity : AppCompatActivity() {
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
         return when {
             userName.isEmpty() -> {
+                // Mostrar mensagem de erro se o nome estiver vazio
                 Toast.makeText(this, "Nome inválido", Toast.LENGTH_SHORT).show()
                 false
             }
             !email.matches(emailPattern.toRegex()) -> {
+                // Mostrar mensagem de erro se o email estiver inválido
                 Toast.makeText(this, "Email inválido", Toast.LENGTH_SHORT).show()
                 false
             }
             senha.length < 6 -> {
+                // Mostrar mensagem de erro se a senha for muito curta
                 Toast.makeText(this, "A senha deve ter pelo menos 6 caracteres", Toast.LENGTH_SHORT).show()
                 false
             }
@@ -74,4 +83,3 @@ class RegistrationActivity : AppCompatActivity() {
         }
     }
 }
-

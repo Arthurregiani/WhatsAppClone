@@ -33,19 +33,27 @@ class SettingsActivity : AppCompatActivity() {
         requestPermissions()
     }
 
+    // Configura a interface do usuário
     private fun setupUI() {
         configureToolbar()
         configureButtons()
     }
 
+    // Configura os botões e suas ações
     private fun configureButtons() {
+        // Configura o botão para selecionar uma imagem da galeria
         binding.imageButtonGalery.setOnClickListener { pickImageLauncher.launch("image/*") }
+
+        // Configura o botão para tirar uma foto
         binding.imageButtonCam.setOnClickListener { takePictureLauncher.launch(null) }
+
+        // Habilita o botão de renomear quando o EditText está em foco
         binding.editTextProfile.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) enableRenameButton()
         }
     }
 
+    // Lançador para tirar uma foto
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
@@ -55,10 +63,12 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    // Lançador para selecionar uma imagem da galeria
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri -> uri?.let { viewModel.uploadProfileImage(it) } }
 
+    // Habilita o botão de renomear
     private fun enableRenameButton() {
         binding.buttonRename.apply {
             setImageResource(R.drawable.ic_check)
@@ -69,6 +79,7 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    // Configura os observadores para LiveData do ViewModel
     private fun setupObservers() {
         viewModel.profileImageUri.observe(this) { uri ->
             Glide.with(this)
@@ -88,6 +99,7 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    // Reseta as configurações após renomear
     private fun resetRenameSettings() {
         closeKeyboard()
         binding.editTextProfile.clearFocus()
@@ -97,6 +109,7 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    // Fecha o teclado virtual
     private fun closeKeyboard() {
         val view = currentFocus
         if (view != null) {
@@ -105,6 +118,7 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    // Solicita permissões necessárias
     private fun requestPermissions() {
         PermissionManager(this) { allGranted ->
             if (!allGranted) {
@@ -113,11 +127,13 @@ class SettingsActivity : AppCompatActivity() {
         }.requestPermission(1, android.Manifest.permission.CAMERA)
     }
 
+    // Lida com o resultado da solicitação de permissões
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         PermissionManager(this).handlePermissionsResult(requestCode, permissions, grantResults)
     }
 
+    // Configura a Toolbar
     private fun configureToolbar() {
         val toolbar = binding.toolbarPrincipal.toolbarPrincipal
         toolbar.title = getString(R.string.configurations)

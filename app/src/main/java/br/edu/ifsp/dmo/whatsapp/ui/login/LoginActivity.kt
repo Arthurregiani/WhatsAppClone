@@ -13,16 +13,22 @@ import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : AppCompatActivity() {
 
+    // Binding para acessar os elementos da interface
     private lateinit var binding: ActivityLoginBinding
+
+    // ViewModel para gerenciar a autenticação
     private val loginViewModel: LoginViewModel by viewModels {
         LoginViewModelFactory(UserRepository(FirebaseAuth.getInstance()))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Configura o binding da interface
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Observa o status de autenticação e navega para a MainActivity se autenticado
         loginViewModel.authStatus.observe(this) { isAuthenticated ->
             if (isAuthenticated) {
                 startActivity(Intent(this, MainActivity::class.java))
@@ -30,6 +36,7 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
+        // Configura o clique do botão de login
         binding.buttonLogin.setOnClickListener {
             val email = binding.editLoginEmail.text.toString()
             val password = binding.editLoginSenha.text.toString()
@@ -38,12 +45,13 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
+        // Configura o clique para navegar até a tela de registro
         binding.textViewCadastro.setOnClickListener {
             startActivity(Intent(this, RegistrationActivity::class.java))
         }
     }
 
-
+    // Valida os dados de entrada do usuário
     private fun validarEntradaDados(email: String, senha: String): Boolean {
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
         return when {

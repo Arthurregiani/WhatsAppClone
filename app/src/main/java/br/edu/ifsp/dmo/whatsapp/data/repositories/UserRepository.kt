@@ -13,27 +13,33 @@ import kotlinx.coroutines.tasks.await
 
 class UserRepository(private val auth: FirebaseAuth) {
 
+    // Instâncias do Firestore e Storage, e referência para a coleção de usuários
     private val firestore = FirebaseFirestore.getInstance()
     private val storageRef = FirebaseStorage.getInstance().reference
     private val usersCollection = firestore.collection("users")
 
+    // LiveData para acompanhar o status de autenticação
     private val _authStatus = MutableLiveData<Boolean>()
     val authStatus: LiveData<Boolean> get() = _authStatus
 
     init {
+        // Atualiza o status de autenticação ao ouvir mudanças
         auth.addAuthStateListener { firebaseAuth ->
             _authStatus.value = firebaseAuth.currentUser != null
         }
     }
 
+    // Obtém o UID do usuário atual
     fun getCurrentUserUid(): String? {
         return auth.currentUser?.uid
     }
 
+    // Manipula falhas de operação
     private fun handleFailure(tag: String, e: Exception) {
         Log.e(tag, "Erro: ${e.message}")
     }
 
+    // Cadastra um novo usuário e autentica com e-mail e senha
     fun cadastrarAutenticacaoUsuario(email: String, password: String, callback: (Boolean, String?, String?) -> Unit) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
@@ -45,6 +51,7 @@ class UserRepository(private val auth: FirebaseAuth) {
             }
     }
 
+    // Cadastra o usuário no Firestore
     fun cadastrarUsuarioDatabase(uid: String, user: User) {
         val userDocument = usersCollection.document(uid)
         userDocument.set(user)
@@ -56,6 +63,7 @@ class UserRepository(private val auth: FirebaseAuth) {
             }
     }
 
+    // Valida a autenticação do usuário com e-mail e senha
     fun validarAutenticacao(email: String, senha: String, callback: (Boolean, String?) -> Unit) {
         auth.signInWithEmailAndPassword(email, senha)
             .addOnCompleteListener { task ->
@@ -67,10 +75,12 @@ class UserRepository(private val auth: FirebaseAuth) {
             }
     }
 
+    // Faz logout do usuário
     fun logout() {
         auth.signOut()
     }
 
+    // Obtém os dados do usuário atual
     fun getDataCurrentUser(callback: (User?) -> Unit) {
         getCurrentUserUid()?.let { uid ->
             val userDocument = usersCollection.document(uid)
@@ -86,6 +96,7 @@ class UserRepository(private val auth: FirebaseAuth) {
         } ?: callback(null)
     }
 
+    // Atualiza o nome do perfil do usuário atual
     fun uploadProfileName(name: String) {
         getCurrentUserUid()?.let { uid ->
             val userDocument = usersCollection.document(uid)
@@ -99,6 +110,7 @@ class UserRepository(private val auth: FirebaseAuth) {
         }
     }
 
+    // Faz upload da imagem de perfil do usuário e retorna a URL
     suspend fun uploadProfileImage(imageUri: Uri): String? {
         val uid = getCurrentUserUid() ?: return null
         val profileImageRef = storageRef.child("profile_images/$uid.jpg")
@@ -114,6 +126,7 @@ class UserRepository(private val auth: FirebaseAuth) {
         }
     }
 
+    // Obtém a URL da imagem de perfil do usuário atual
     suspend fun getProfileImageUrl(): String? {
         val uid = getCurrentUserUid() ?: return null
 
@@ -126,6 +139,7 @@ class UserRepository(private val auth: FirebaseAuth) {
         }
     }
 
+    // Obtém o UID do usuário baseado no e-mail fornecido
     suspend fun getUidByEmail(email: String): String? {
         return try {
             val querySnapshot = usersCollection.whereEqualTo("email", email).get().await()
@@ -140,7 +154,7 @@ class UserRepository(private val auth: FirebaseAuth) {
         }
     }
 
-    // Adicionando contato ao Firestore
+    // Adiciona um contato à lista de contatos do usuário atual
     suspend fun addContact(contactEmail: String): Boolean {
         val uid = getCurrentUserUid() ?: return false
 
@@ -158,18 +172,18 @@ class UserRepository(private val auth: FirebaseAuth) {
                 userDocument.update("contacts.$contactUid", contactInfo).await()
 
                 Log.d("UserRepository", "Contato adicionado com sucesso.")
-                return true
+                true
             } else {
                 Log.d("UserRepository", "Contato não encontrado.")
-                return false
+                false
             }
         } catch (e: Exception) {
             handleFailure("UserRepository", e)
-            return false
+            false
         }
     }
 
-    // UserRepository.kt
+    // Obtém a lista de contatos do usuário atual
     suspend fun getContacts(): List<Contact> {
         val uid = getCurrentUserUid() ?: return emptyList()
 
@@ -187,5 +201,4 @@ class UserRepository(private val auth: FirebaseAuth) {
             emptyList()
         }
     }
-
 }
