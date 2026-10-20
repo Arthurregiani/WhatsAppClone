@@ -41,6 +41,13 @@ grupos, recuperação de senha ou verificação de propriedade do e-mail.
 As mensagens **não têm criptografia ponta a ponta** e ficam no servidor.
 A franquia gratuita é compartilhada com outros projetos da conta e pode se esgotar.
 
+## Capturas reais
+
+Capturas do teste no emulador Android 15, com contas QA descartáveis:
+
+<img src="docs/evidence/03-chat.png" width="280" alt="Envio e recebimento de mensagens em tempo real" />
+<img src="docs/evidence/04-conversations.png" width="280" alt="Lista de conversas carregada" />
+
 ## Compilar Android
 
 Requer JDK 17, Android SDK 35 e conexão para baixar dependências. O Gradle Wrapper

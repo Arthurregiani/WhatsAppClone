@@ -14,7 +14,7 @@ nem a validação em todos os modelos de telefone.
 | Compilação Android debug e release assinada | PASS |
 | Lint Android | PASS: 0 erros; avisos de dependências e layouts legados permanecem |
 | Emulador Android 15/API 35: fluxo das telas | PASS: 1 teste completo, 0 falhas |
-| Revalidação remota do código final | Em execução pelo workflow manual `live-validation.yml` |
+| Revalidação remota da API e do Android | PASS: GitHub Actions, incluindo upload/processamento de foto |
 | Celular físico, câmera física e seletor de galeria do fabricante | NOT TESTED |
 | Versão iOS/IPA | Não implementada: esforço significativo; avaliação em `IOS.md` |
 
@@ -55,3 +55,19 @@ verificação de e-mail ou criptografia ponta a ponta. Sem migração do Firebas
 antigo. Compatibilidade declarada desde Android 8/API 26; teste de execução
 realizado em API 35. O serviço gratuito compartilha franquia com outros projetos;
 um Durable Object único é adequado a pequeno uso, com limite de escala.
+
+## Evidências reproduzíveis
+
+- [CI de compilação, lint e backend](https://github.com/Arthurregiani/WhatsAppClone/actions/runs/39500160551): sucesso nos dois jobs.
+- [Integração HTTPS e fluxo Android](https://github.com/Arthurregiani/WhatsAppClone/actions/runs/39499265296): sucesso; teste Android em 33,26 s, `OK (1 test)`.
+- [Revalidação do histórico com espera explícita pelo RecyclerView](https://github.com/Arthurregiani/WhatsAppClone/actions/runs/39500161200): sucesso em 32,935 s; as capturas aguardam a tela estabilizar.
+- [Resultado do teste de interface](evidence/android-api35-test.txt).
+- [APK release instalado e aberto no emulador](evidence/release-login-api35.png).
+
+APK release: `WhatsApp-2-2.0.0.apk`, 5.698.317 bytes, assinatura APK v2 válida.
+SHA-256: `515c29c54cbb22e253eb614e5d9f37f08da9379909292cf848569f64ba230e62`.
+Certificado de assinatura SHA-256:
+`448d9cffd871b316363200e236dd2f8a2e1dcd5ae225ecf0a5953d9dd8e44dbd`.
+O certificado é público; a chave privada e as senhas não foram publicadas.
+
+A revisão das capturas também corrigiu o truncamento da prévia de mensagem longa: a linha usa reticências em vez de cortar a linha seguinte. Compilação e lint foram repetidos após esse ajuste de layout.

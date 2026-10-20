@@ -1,0 +1,5 @@
+br.edu.ifsp.dmo.whatsapp.MessagingFlowTest:.
+
+Time: 32.935
+
+OK (1 test)

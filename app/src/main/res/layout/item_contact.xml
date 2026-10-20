@@ -41,6 +41,8 @@
                 android:id="@+id/textContactEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:text="@string/contactEmail" />
 
         </LinearLayout>
