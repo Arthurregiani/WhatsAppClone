@@ -54,7 +54,20 @@ class MessagingFlowTest {
         }
         throw AssertionError("Did not display $text", last)
     }
+    private fun waitForConversation() {
+        val deadline = System.currentTimeMillis() + 20_000
+        var last: Throwable? = null
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                onView(withId(R.id.conversations)).check(matches(hasDescendant(withText("Bruno QA"))))
+                return
+            } catch (error: Throwable) { last = error; Thread.sleep(200) }
+        }
+        throw AssertionError("Conversation did not load in its RecyclerView", last)
+    }
     private fun screenshot(name: String) {
+        instrumentation.waitForIdleSync()
+        instrumentation.uiAutomation.waitForIdle(500, 5000)
         val directory = File(context.getExternalFilesDir(null), "evidence").apply { mkdirs() }
         instrumentation.uiAutomation.takeScreenshot().useBitmap { bitmap ->
             File(directory, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
@@ -99,7 +112,7 @@ class MessagingFlowTest {
             onView(withId(R.id.editTextSend)).check(matches(withText("")))
             pressBack()
             onView(withText("Conversas")).perform(click())
-            waitForView("Bruno QA")
+            waitForConversation()
             screenshot("04-conversations")
             onView(withId(R.id.menuPesquisa)).perform(click())
             onView(isAssignableFrom(androidx.appcompat.widget.SearchView.SearchAutoComplete::class.java)).perform(replaceText("Ninguém"), closeSoftKeyboard())
@@ -132,7 +145,7 @@ class MessagingFlowTest {
             onView(withId(R.id.editLoginSenha)).perform(replaceText(password), closeSoftKeyboard())
             onView(withId(R.id.buttonLogin)).perform(click())
             waitForView("WhatsApp 2")
-            waitForView("Bruno QA")
+            waitForConversation()
             // Verify the persisted session is encrypted and survives activity recreation.
             val persisted = context.getSharedPreferences("session", 0).getString("encrypted", "")!!
             assertFalse(persisted.contains(App.session.token!!))
