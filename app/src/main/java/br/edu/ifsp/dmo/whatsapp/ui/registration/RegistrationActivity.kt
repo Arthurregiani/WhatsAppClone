@@ -3,14 +3,13 @@ package br.edu.ifsp.dmo.whatsapp.ui.registration
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import br.edu.ifsp.dmo.whatsapp.ui.ClassicActivity
 import androidx.lifecycle.ViewModelProvider
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityCadastroBinding
 import br.edu.ifsp.dmo.whatsapp.ui.login.LoginActivity
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
-import com.google.firebase.auth.FirebaseAuth
 
-class RegistrationActivity : AppCompatActivity() {
+class RegistrationActivity : ClassicActivity() {
 
     private lateinit var binding: ActivityCadastroBinding
     private lateinit var viewModel: RegistrationViewModel
@@ -21,7 +20,7 @@ class RegistrationActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Inicializar o ViewModel com uma Factory
-        val viewModelFactory = RegistrationViewModelFactory(UserRepository(FirebaseAuth.getInstance()))
+        val viewModelFactory = RegistrationViewModelFactory(UserRepository())
         viewModel = ViewModelProvider(this, viewModelFactory)[RegistrationViewModel::class.java]
 
         // Observar o status do cadastro
@@ -37,14 +36,15 @@ class RegistrationActivity : AppCompatActivity() {
             }
         }
 
+        viewModel.busy.observe(this) { binding.buttonCadastrar.isEnabled = !it }
         setClickListeners()
     }
 
     private fun setClickListeners() {
         // Configurar o listener para o botão de cadastro
         binding.buttonCadastrar.setOnClickListener {
-            val userName = binding.editTextNome.text.toString()
-            val email = binding.editTextEmail.text.toString()
+            val userName = binding.editTextNome.text.toString().trim()
+            val email = binding.editTextEmail.text.toString().trim()
             val senha = binding.editTextSenha.text.toString()
 
             if (validarDados(userName, email, senha)) {
@@ -56,27 +56,27 @@ class RegistrationActivity : AppCompatActivity() {
 
     private fun abrirTelaLogin() {
         // Abrir a tela de login e finalizar a atividade atual
-        val intent = Intent(this, LoginActivity::class.java)
+        val intent = Intent(this, br.edu.ifsp.dmo.whatsapp.ui.main.MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         startActivity(intent)
         finish()
     }
 
     private fun validarDados(userName: String, email: String, senha: String): Boolean {
-        val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
+
         return when {
-            userName.isEmpty() -> {
+            userName.isBlank() -> {
                 // Mostrar mensagem de erro se o nome estiver vazio
                 Toast.makeText(this, "Nome inválido", Toast.LENGTH_SHORT).show()
                 false
             }
-            !email.matches(emailPattern.toRegex()) -> {
+            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
                 // Mostrar mensagem de erro se o email estiver inválido
                 Toast.makeText(this, "Email inválido", Toast.LENGTH_SHORT).show()
                 false
             }
-            senha.length < 6 -> {
+            senha.length < 8 -> {
                 // Mostrar mensagem de erro se a senha for muito curta
-                Toast.makeText(this, "A senha deve ter pelo menos 6 caracteres", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "A senha deve ter pelo menos 8 caracteres", Toast.LENGTH_SHORT).show()
                 false
             }
             else -> true

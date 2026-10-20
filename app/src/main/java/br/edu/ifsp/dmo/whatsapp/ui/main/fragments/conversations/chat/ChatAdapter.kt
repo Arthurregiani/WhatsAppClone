@@ -6,13 +6,12 @@ import androidx.recyclerview.widget.RecyclerView
 import br.edu.ifsp.dmo.whatsapp.data.model.Message
 import br.edu.ifsp.dmo.whatsapp.databinding.ItemMessageSentBinding
 import br.edu.ifsp.dmo.whatsapp.databinding.ItemMessageReceivedBinding
-import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class ChatAdapter(private var messages: List<Message>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
+    private val currentUserUid = br.edu.ifsp.dmo.whatsapp.App.session.userId
 
     companion object {
         private const val VIEW_TYPE_SENT = 1

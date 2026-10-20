@@ -1,204 +1,88 @@
 package br.edu.ifsp.dmo.whatsapp.data.repositories
 
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import android.os.Build
+import android.provider.MediaStore
+import android.util.Base64
+import br.edu.ifsp.dmo.whatsapp.App
 import br.edu.ifsp.dmo.whatsapp.data.model.Contact
 import br.edu.ifsp.dmo.whatsapp.data.model.User
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 
-class UserRepository(private val auth: FirebaseAuth) {
+class UserRepository {
+    val authStatus get() = App.session.authenticated
+    fun getCurrentUserUid(): String? = App.session.userId
 
-    // Instâncias do Firestore e Storage, e referência para a coleção de usuários
-    private val firestore = FirebaseFirestore.getInstance()
-    private val storageRef = FirebaseStorage.getInstance().reference
-    private val usersCollection = firestore.collection("users")
-
-    // LiveData para acompanhar o status de autenticação
-    private val _authStatus = MutableLiveData<Boolean>()
-    val authStatus: LiveData<Boolean> get() = _authStatus
-
-    init {
-        // Atualiza o status de autenticação ao ouvir mudanças
-        auth.addAuthStateListener { firebaseAuth ->
-            _authStatus.value = firebaseAuth.currentUser != null
-        }
+    suspend fun register(nome: String, email: String, password: String) {
+        val result = App.api.request("POST", "/auth/register", JSONObject().put("nome", nome).put("email", email).put("password", password), auth = false)
+        withContext(Dispatchers.IO) { App.session.save(result) }
     }
 
-    // Obtém o UID do usuário atual
-    fun getCurrentUserUid(): String? {
-        return auth.currentUser?.uid
+    suspend fun login(email: String, password: String) {
+        val result = App.api.request("POST", "/auth/login", JSONObject().put("email", email).put("password", password), auth = false)
+        withContext(Dispatchers.IO) { App.session.save(result) }
     }
 
-    // Manipula falhas de operação
-    private fun handleFailure(tag: String, e: Exception) {
-        Log.e(tag, "Erro: ${e.message}")
+    suspend fun logout() {
+        try { App.api.request("POST", "/auth/logout") }
+        finally { withContext(Dispatchers.IO) { App.session.clear() } }
     }
 
-    // Cadastra um novo usuário e autentica com e-mail e senha
-    fun cadastrarAutenticacaoUsuario(email: String, password: String, callback: (Boolean, String?, String?) -> Unit) {
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    callback(true, getCurrentUserUid(), null)
-                } else {
-                    callback(false, null, task.exception?.message)
-                }
+    suspend fun currentUser(): User {
+        val value = App.api.request("GET", "/me").getJSONObject("user")
+        return User(value.getString("nome"), value.getString("email"), value.optString("profileImageUrl").takeUnless { it == "null" || it.isBlank() })
+    }
+
+    suspend fun uploadProfileName(name: String) {
+        App.api.request("PATCH", "/me", JSONObject().put("nome", name))
+    }
+
+    suspend fun uploadProfileImage(imageUri: Uri): String = withContext(Dispatchers.IO) {
+        val resolver = App.instance.contentResolver
+        val bitmap = if (Build.VERSION.SDK_INT >= 28) {
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(resolver, imageUri)) { decoder, info, _ ->
+                val scale = 256f / maxOf(info.size.width, info.size.height).coerceAtLeast(256)
+                decoder.setTargetSize((info.size.width * scale).toInt().coerceAtLeast(1), (info.size.height * scale).toInt().coerceAtLeast(1))
+                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
             }
-    }
-
-    // Cadastra o usuário no Firestore
-    fun cadastrarUsuarioDatabase(uid: String, user: User) {
-        val userDocument = usersCollection.document(uid)
-        userDocument.set(user)
-            .addOnSuccessListener {
-                Log.d("UserRepository", "Usuário cadastrado com sucesso no Firestore.")
+        } else {
+            // Read bounds first to avoid decoding a full camera photograph on Android 8.
+            val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            resolver.openInputStream(imageUri).use { android.graphics.BitmapFactory.decodeStream(it, null, bounds) }
+            val options = android.graphics.BitmapFactory.Options().apply {
+                var sample = 1
+                while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 512) sample *= 2
+                inSampleSize = sample
             }
-            .addOnFailureListener { e ->
-                handleFailure("UserRepository", e)
-            }
-    }
-
-    // Valida a autenticação do usuário com e-mail e senha
-    fun validarAutenticacao(email: String, senha: String, callback: (Boolean, String?) -> Unit) {
-        auth.signInWithEmailAndPassword(email, senha)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    callback(true, null)
-                } else {
-                    callback(false, task.exception?.message)
-                }
-            }
-    }
-
-    // Faz logout do usuário
-    fun logout() {
-        auth.signOut()
-    }
-
-    // Obtém os dados do usuário atual
-    fun getDataCurrentUser(callback: (User?) -> Unit) {
-        getCurrentUserUid()?.let { uid ->
-            val userDocument = usersCollection.document(uid)
-            userDocument.get()
-                .addOnSuccessListener { documentSnapshot ->
-                    val user = documentSnapshot.toObject(User::class.java)
-                    callback(user)
-                }
-                .addOnFailureListener { exception ->
-                    handleFailure("UserRepository", exception)
-                    callback(null)
-                }
-        } ?: callback(null)
-    }
-
-    // Atualiza o nome do perfil do usuário atual
-    fun uploadProfileName(name: String) {
-        getCurrentUserUid()?.let { uid ->
-            val userDocument = usersCollection.document(uid)
-            userDocument.update("nome", name)
-                .addOnSuccessListener {
-                    Log.d("UserRepository", "Nome atualizado com sucesso no Firestore.")
-                }
-                .addOnFailureListener { e ->
-                    handleFailure("UserRepository", e)
-                }
+            resolver.openInputStream(imageUri).use { android.graphics.BitmapFactory.decodeStream(it, null, options) }
+                ?: throw IllegalArgumentException("Não foi possível abrir a imagem.")
         }
+        val scale = 256f / maxOf(bitmap.width, bitmap.height).coerceAtLeast(256)
+        val resized = Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt().coerceAtLeast(1), (bitmap.height * scale).toInt().coerceAtLeast(1), true)
+        val bytes = ByteArrayOutputStream().also { resized.compress(Bitmap.CompressFormat.JPEG, 75, it) }.toByteArray()
+        if (resized !== bitmap) resized.recycle()
+        bitmap.recycle()
+        val image = "data:image/jpeg;base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
+        App.api.request("PUT", "/me/avatar", JSONObject().put("image", image)).getString("profileImageUrl")
     }
 
-    // Faz upload da imagem de perfil do usuário e retorna a URL
-    suspend fun uploadProfileImage(imageUri: Uri): String? {
-        val uid = getCurrentUserUid() ?: return null
-        val profileImageRef = storageRef.child("profile_images/$uid.jpg")
-
-        return try {
-            val downloadUrl = profileImageRef.putFile(imageUri).await().storage.downloadUrl.await().toString()
-            val userDocument = usersCollection.document(uid)
-            userDocument.update("profileImageUrl", downloadUrl).await()
-            downloadUrl
-        } catch (e: Exception) {
-            handleFailure("UserRepository", e)
-            null
-        }
-    }
-
-    // Obtém a URL da imagem de perfil do usuário atual
-    suspend fun getProfileImageUrl(): String? {
-        val uid = getCurrentUserUid() ?: return null
-
-        return try {
-            val userDoc = usersCollection.document(uid).get().await()
-            userDoc.getString("profileImageUrl")
-        } catch (e: Exception) {
-            handleFailure("UserRepository", e)
-            null
-        }
-    }
-
-    // Obtém o UID do usuário baseado no e-mail fornecido
-    suspend fun getUidByEmail(email: String): String? {
-        return try {
-            val querySnapshot = usersCollection.whereEqualTo("email", email).get().await()
-            if (!querySnapshot.isEmpty) {
-                querySnapshot.documents.firstOrNull()?.id
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            handleFailure("UserRepository", e)
-            null
-        }
-    }
-
-    // Adiciona um contato à lista de contatos do usuário atual
     suspend fun addContact(contactEmail: String): Boolean {
-        val uid = getCurrentUserUid() ?: return false
-
-        return try {
-            val contactUid = getUidByEmail(contactEmail)
-            if (contactUid != null) {
-                val contactData = usersCollection.document(contactUid).get().await()
-                val contactName = contactData.getString("nome") ?: "Nome desconhecido"
-
-                val userDocument = usersCollection.document(uid)
-                val contactInfo = mapOf(
-                    "nome" to contactName,
-                    "email" to contactEmail
-                )
-                userDocument.update("contacts.$contactUid", contactInfo).await()
-
-                Log.d("UserRepository", "Contato adicionado com sucesso.")
-                true
-            } else {
-                Log.d("UserRepository", "Contato não encontrado.")
-                false
-            }
-        } catch (e: Exception) {
-            handleFailure("UserRepository", e)
-            false
-        }
+        App.api.request("POST", "/contacts", JSONObject().put("email", contactEmail))
+        return true
     }
 
-    // Obtém a lista de contatos do usuário atual
     suspend fun getContacts(): List<Contact> {
-        val uid = getCurrentUserUid() ?: return emptyList()
+        val contacts = App.api.request("GET", "/contacts").getJSONArray("contacts")
+        return (0 until contacts.length()).map { parseContact(contacts.getJSONObject(it)) }
+    }
 
-        return try {
-            val userDocument = usersCollection.document(uid).get().await()
-            val contactsMap = userDocument.get("contacts") as? Map<String, Map<String, String>>
-            contactsMap?.map { (contactUid, contactInfo) ->
-                val contactName = contactInfo["nome"] ?: "Nome desconhecido"
-                val contactEmail = contactInfo["email"] ?: ""
-                val profileImageUrl = usersCollection.document(contactUid).get().await().getString("profileImageUrl")
-                Contact(nome = contactName, email = contactEmail, profileImageUrl = profileImageUrl)
-            } ?: emptyList()
-        } catch (e: Exception) {
-            handleFailure("UserRepository", e)
-            emptyList()
-        }
+    companion object {
+        fun parseContact(value: JSONObject) = Contact(value.getString("nome"), value.getString("email"),
+            value.optString("profileImageUrl").takeUnless { it == "null" || it.isBlank() })
     }
 }

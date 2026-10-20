@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WhatsApp Clone</string>
+    <string name="app_name">WhatsApp 2</string>
     <string name="digite_email">Digite seu e-mail</string>
     <string name="digite_senha">Digite sua senha</string>
     <string name="botao_login">Login</string>
@@ -14,9 +14,15 @@
     <string name="contatos">Contatos</string>
     <string name="user_name">Nome do usuário</string>
     <string name="edit">edit</string>
-    <string name="textViewUsername">Esse não é seu nomde de usuário. Esse nome será exibido para seus contatos do whatsapp.</string>
+    <string name="textViewUsername">Esse nome será exibido para seus contatos.</string>
     <string name="configurations">Configurações</string>
     <string name="contactName">Name</string>
     <string name="contactEmail">email</string>
 
+    <string name="load_older">Carregar mensagens anteriores</string>
+    <string name="send_message">Enviar mensagem</string>
+    <string name="add_contact">Adicionar contato</string>
+    <string name="no_conversations">Nenhuma conversa ainda. Adicione alguém na aba Contatos.</string>
+    <string name="no_contacts">Seus contatos aparecem aqui. Toque em + para adicionar por e-mail.</string>
+    <string name="loading">Carregando…</string>
 </resources>

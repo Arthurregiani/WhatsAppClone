@@ -2,14 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission
-        android:name="android.permission.CAMERA"
-        android:required="false"
-        tools:ignore="PermissionImpliesUnsupportedChromeOsHardware" />
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Glide 4.x contains an unused NotificationTarget. This app posts no notifications;
+         suppress that dependency-only lint false positive without requesting a permission. -->
     <application
-        android:allowBackup="true"
+        tools:ignore="NotificationPermission"
+        android:name=".App"
+        android:allowBackup="false"
+        android:usesCleartextTraffic="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/logo"

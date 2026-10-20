@@ -9,99 +9,76 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import br.edu.ifsp.dmo.whatsapp.App
 import br.edu.ifsp.dmo.whatsapp.R
-import br.edu.ifsp.dmo.whatsapp.data.model.Contact
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import br.edu.ifsp.dmo.whatsapp.databinding.FragmentContactsBinding
+import br.edu.ifsp.dmo.whatsapp.ui.main.MainViewModel
+import br.edu.ifsp.dmo.whatsapp.ui.main.MainViewModelFactory
 import br.edu.ifsp.dmo.whatsapp.ui.main.fragments.conversations.chat.ChatActivity
-import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 class FragmentContacts : Fragment() {
-
-    // View binding
     private var _binding: FragmentContactsBinding? = null
-    private val binding get() = _binding!!
-
-    // ViewModel e Adapter
-    private lateinit var contactViewModel: ContactViewModel
-    private lateinit var contactAdapter: ContactAdapter
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        // Configuração do binding e ViewModel
-        _binding = FragmentContactsBinding.inflate(inflater, container, false)
-        val factory = ContactViewModelFactory(UserRepository(FirebaseAuth.getInstance()))
-        contactViewModel = ViewModelProvider(this, factory)[ContactViewModel::class.java]
-
-        // Configura o RecyclerView com o adapter e o layout manager
-        contactAdapter = ContactAdapter { contact ->
-            onContactClick(contact) // Ação ao clicar no contato
+    private val model: ContactViewModel by viewModels { ContactViewModelFactory(UserRepository()) }
+    private val main: MainViewModel by activityViewModels { MainViewModelFactory(UserRepository()) }
+    private lateinit var adapter: ContactAdapter
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, state: Bundle?): View =
+        FragmentContactsBinding.inflate(inflater, container, false).also { _binding = it }.root
+    override fun onViewCreated(view: View, state: Bundle?) {
+        val binding = _binding!!
+        adapter = ContactAdapter { contact ->
+            startActivity(Intent(requireContext(), ChatActivity::class.java).apply {
+                putExtra("contactName", contact.nome); putExtra("contactEmail", contact.email)
+                putExtra("contactProfileImageUrl", contact.profileImageUrl)
+            })
         }
         binding.RecyclerViewContacts.layoutManager = LinearLayoutManager(requireContext())
-        binding.RecyclerViewContacts.adapter = contactAdapter
-
-        // Obtém e exibe a lista de contatos
-        getContacts()
-
-        // Configura o botão para adicionar novos contatos
-        binding.buttonAddContact.setOnClickListener {
-            showAddContactDialog()
-        }
-
-        return binding.root
-    }
-
-    // Obtém a lista de contatos do ViewModel e atualiza o adapter
-    private fun getContacts() {
-        contactViewModel.getContacts { contacts ->
-            contactAdapter.submitList(contacts)
+        binding.RecyclerViewContacts.adapter = adapter
+        model.contacts.observe(viewLifecycleOwner) { render() }
+        model.error.observe(viewLifecycleOwner) { render() }
+        main.query.observe(viewLifecycleOwner) { render() }
+        binding.buttonAddContact.setOnClickListener { addDialog() }
+        binding.emptyState.setOnClickListener { viewLifecycleOwner.lifecycleScope.launch { model.refresh() } }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) { App.api.events().collect { model.refresh() } }
         }
     }
-
-    // Exibe um diálogo para adicionar um novo contato
-    private fun showAddContactDialog() {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_contact, null)
-        val emailEditText: EditText = dialogView.findViewById(R.id.editTextEmail)
-
-        AlertDialog.Builder(requireContext())
-            .setTitle("Adicionar Contato")
-            .setView(dialogView)
-            .setPositiveButton("Salvar") { _, _ ->
-                val email = emailEditText.text.toString().trim()
-                if (email.isNotEmpty()) {
-                    contactViewModel.addContact(email) { success, errorMessage ->
-                        if (success) {
-                            Toast.makeText(requireContext(), "Contato adicionado com sucesso!", Toast.LENGTH_SHORT).show()
-                            getContacts() // Atualiza a lista de contatos
-                        } else {
-                            Toast.makeText(requireContext(), "Erro: $errorMessage", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                } else {
-                    Toast.makeText(requireContext(), "Por favor, insira um e-mail válido.", Toast.LENGTH_SHORT).show()
+    private fun render() {
+        val binding = _binding ?: return
+        val query = main.query.value.orEmpty()
+        val rows = model.contacts.value.orEmpty().filter { it.nome.contains(query, true) || it.email.contains(query, true) }
+        adapter.submitList(rows)
+        binding.emptyState.text = model.error.value ?: if (query.isNotEmpty()) "Nenhum contato encontrado." else getString(R.string.no_contacts)
+        binding.emptyState.visibility = if (rows.isEmpty() || model.error.value != null) View.VISIBLE else View.GONE
+    }
+    private fun addDialog() {
+        val content = layoutInflater.inflate(R.layout.dialog_add_contact, null)
+        val field = content.findViewById<EditText>(R.id.editTextEmail)
+        val dialog = AlertDialog.Builder(requireContext()).setTitle("Adicionar contato").setView(content)
+            .setPositiveButton("Salvar", null).setNegativeButton("Cancelar", null).create()
+        dialog.setOnShowListener {
+            val save = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            save.setOnClickListener {
+                val email = field.text.toString().trim()
+                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) { field.error = "Informe um e-mail válido"; return@setOnClickListener }
+                save.isEnabled = false
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try { model.add(email); dialog.dismiss() }
+                    catch (e: CancellationException) { throw e }
+                    catch (e: Exception) { if (isAdded) Toast.makeText(requireContext(), e.message, Toast.LENGTH_LONG).show() }
+                    finally { save.isEnabled = true }
                 }
             }
-            .setNegativeButton("Cancelar", null)
-            .show()
-    }
-
-    // Ação ao clicar em um contato: abre a atividade de chat
-    private fun onContactClick(contact: Contact) {
-        val intent = Intent(requireContext(), ChatActivity::class.java).apply {
-            putExtra("contactName", contact.nome)
-            putExtra("contactEmail", contact.email)
-            putExtra("contactProfileImageUrl", contact.profileImageUrl)
         }
-        startActivity(intent)
+        dialog.show()
     }
-
-    // Limpa o binding quando a view é destruída
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
+    override fun onDestroyView() { _binding?.RecyclerViewContacts?.adapter = null; _binding = null; super.onDestroyView() }
 }

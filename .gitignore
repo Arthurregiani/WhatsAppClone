@@ -10,3 +10,16 @@
 /captures
 .externalNativeBuild
 .cxx
+.tooling/
+local.properties
+**/build/
+node_modules/
+.wrangler/
+.dev.vars
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+signing.properties
+dist/

@@ -3,23 +3,22 @@ package br.edu.ifsp.dmo.whatsapp.ui.main
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
+import br.edu.ifsp.dmo.whatsapp.ui.ClassicActivity
 import br.edu.ifsp.dmo.whatsapp.R
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityMainBinding
 import br.edu.ifsp.dmo.whatsapp.ui.settings.SettingsActivity
 import br.edu.ifsp.dmo.whatsapp.ui.login.LoginActivity
 import com.google.android.material.tabs.TabLayoutMediator
-import com.google.firebase.auth.FirebaseAuth
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ClassicActivity() {
 
     // Binding para a ActivityMainBinding
     private lateinit var binding: ActivityMainBinding
 
     // ViewModel para gerenciar o estado da Activity
     private val mainViewModel: MainViewModel by viewModels {
-        MainViewModelFactory(UserRepository(FirebaseAuth.getInstance()))
+        MainViewModelFactory(UserRepository())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,7 +41,7 @@ class MainActivity : AppCompatActivity() {
 
     // Inicia a Activity de login
     private fun abrirLogin() {
-        startActivity(Intent(this, LoginActivity::class.java))
+        startActivity(Intent(this, LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
     }
 
     // Inicia a Activity de configurações
@@ -76,6 +75,12 @@ class MainActivity : AppCompatActivity() {
     // Infla o menu de opções
     override fun onCreateOptionsMenu(menu: android.view.Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
+        val search = menu?.findItem(R.id.menuPesquisa)?.actionView as? androidx.appcompat.widget.SearchView
+        search?.queryHint = "Pesquisar conversas e contatos"
+        search?.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean { search.clearFocus(); return true }
+            override fun onQueryTextChange(query: String?): Boolean { mainViewModel.query.value = query.orEmpty(); return true }
+        })
         return true
     }
 

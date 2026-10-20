@@ -1,27 +1,20 @@
 package br.edu.ifsp.dmo.whatsapp.ui.main
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.map
+import androidx.lifecycle.viewModelScope
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 class MainViewModel(private val userRepository: UserRepository) : ViewModel() {
-
-    // LiveData que indica o estado de logout
-    private val _logoutStatus = MutableLiveData<Boolean>()
-    val logoutStatus: LiveData<Boolean> get() = _logoutStatus
-
-    init {
-        // Observa mudanças no estado de autenticação do usuário
-        userRepository.authStatus.observeForever { isAuthenticated ->
-            if (!isAuthenticated) {
-                _logoutStatus.value = true // Marca o logout como detectado
-            }
-        }
-    }
-
-    // Função para realizar o logout
+    val query = androidx.lifecycle.MutableLiveData("")
+    val logoutStatus = userRepository.authStatus.map { !it }
     fun logout() {
-        userRepository.logout() // Chama o método de logout no UserRepository
+        viewModelScope.launch {
+            try { userRepository.logout() }
+            catch (e: CancellationException) { throw e }
+            catch (_: Exception) { /* The local session has already been cleared. */ }
+        }
     }
 }

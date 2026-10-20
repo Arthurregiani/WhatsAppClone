@@ -1,127 +1,71 @@
 package br.edu.ifsp.dmo.whatsapp.ui.main.fragments.conversations.chat
 
+import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
+import android.view.View
+import android.widget.Toast
+import br.edu.ifsp.dmo.whatsapp.ui.ClassicActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import br.edu.ifsp.dmo.whatsapp.App
 import br.edu.ifsp.dmo.whatsapp.R
 import br.edu.ifsp.dmo.whatsapp.data.repositories.ChatRepository
 import br.edu.ifsp.dmo.whatsapp.data.repositories.UserRepository
 import br.edu.ifsp.dmo.whatsapp.databinding.ActivityChatBinding
+import br.edu.ifsp.dmo.whatsapp.ui.login.LoginActivity
 import com.bumptech.glide.Glide
-import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class ChatActivity : AppCompatActivity() {
-
+class ChatActivity : ClassicActivity() {
     private lateinit var binding: ActivityChatBinding
-    private lateinit var chatViewModel: ChatViewModel
-    private lateinit var chatAdapter: ChatAdapter
-
+    private lateinit var model: ChatViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        setupViewModel()
-        setupUI()
-        setupObservers()
-
-        chatViewModel.checkOrCreateChat(getContactEmail())
-    }
-
-    // Configura o ViewModel com repositórios e dados do contato
-    private fun setupViewModel() {
-        val chatRepository = ChatRepository()
-        val userRepository = UserRepository(FirebaseAuth.getInstance())
-        val factory = ChatViewModelFactory(
-            chatRepository,
-            userRepository,
-            getContactName(),
-            getContactProfileImageUrl()
-        )
-        chatViewModel = ViewModelProvider(this, factory).get(ChatViewModel::class.java)
-    }
-
-    // Configura a interface do usuário, incluindo RecyclerView e botão de enviar mensagem
-    private fun setupUI() {
-        chatAdapter = ChatAdapter(emptyList())
-        binding.recyclerViewMessages.apply {
-            layoutManager = LinearLayoutManager(this@ChatActivity)
-            adapter = chatAdapter
-        }
-
-        configureToolbar()
-
-        binding.buttonSend.setOnClickListener {
-            sendMessage(getContactEmail())
-        }
-    }
-
-    // Configura observadores para mudanças no ViewModel
-    private fun setupObservers() {
-        chatViewModel.messages.observe(this, Observer { messages ->
-            val sortedMessages = messages.sortedBy { it.timestamp }
-            chatAdapter.updateMessages(sortedMessages)
-            binding.recyclerViewMessages.scrollToPosition(sortedMessages.size - 1)
-        })
-
-        chatViewModel.chatId.observe(this, Observer { chatId ->
-            chatId?.let {
-                chatViewModel.observeMessages(it)
-            }
-        })
-
-        chatViewModel.contactName.observe(this, Observer { name ->
-            binding.textContactName.text = name
-        })
-
-        chatViewModel.contactProfileImageUrl.observe(this, Observer { imageUrl ->
-            Glide.with(this)
-                .load(imageUrl ?: R.drawable.user_image_default)
-                .into(binding.contactProfileImage)
-        })
-    }
-
-    // Configura a toolbar
-    private fun configureToolbar() {
+        model = ViewModelProvider(this, ChatViewModelFactory(ChatRepository(), UserRepository(),
+            intent.getStringExtra("contactName") ?: "", intent.getStringExtra("contactProfileImageUrl")))[ChatViewModel::class.java]
+        val adapter = ChatAdapter(emptyList())
+        binding.recyclerViewMessages.layoutManager = LinearLayoutManager(this).apply { stackFromEnd = true }
+        binding.recyclerViewMessages.adapter = adapter
         setSupportActionBar(binding.toolbarPrincipal.toolbarPrincipal)
-        supportActionBar?.apply {
-            setDisplayShowTitleEnabled(false)
-            setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.apply { setDisplayShowTitleEnabled(false); setDisplayHomeAsUpEnabled(true) }
+        binding.textContactName.text = intent.getStringExtra("contactName")
+        Glide.with(this).load(intent.getStringExtra("contactProfileImageUrl") ?: R.drawable.user_image_default).into(binding.contactProfileImage)
+        binding.buttonSend.setOnClickListener {
+            binding.editTextSend.text.toString().trim().takeIf { it.isNotEmpty() }?.let { model.sendMessage(it) }
         }
-    }
-
-    // Envia uma mensagem para o chat
-    private fun sendMessage(contactEmail: String) {
-        val messageText = binding.editTextSend.text.toString().trim()
-        if (messageText.isNotEmpty()) {
-            CoroutineScope(Dispatchers.IO).launch {
-                chatViewModel.chatId.value?.let { chatId ->
-                    chatViewModel.sendMessage(
-                        chatId,
-                        messageText,
-                        chatViewModel.userRepository.getCurrentUserUid() ?: return@launch
-                    )
-                    clearInputField()
-                }
+        binding.buttonOlder.setOnClickListener { model.older() }
+        binding.buttonSend.isEnabled = false
+        model.chatId.observe(this) { binding.buttonSend.isEnabled = it != null && model.sending.value != true }
+        model.hasMore.observe(this) { binding.buttonOlder.visibility = if (it) View.VISIBLE else View.GONE }
+        model.messages.observe(this) { messages ->
+            val manager = binding.recyclerViewMessages.layoutManager as LinearLayoutManager
+            val nearBottom = manager.findLastVisibleItemPosition() >= adapter.itemCount - 3
+            adapter.updateMessages(messages)
+            if (nearBottom && messages.isNotEmpty()) binding.recyclerViewMessages.scrollToPosition(messages.lastIndex)
+        }
+        model.sending.observe(this) { binding.buttonSend.isEnabled = !it && model.chatId.value != null }
+        model.sent.observe(this) { text ->
+            if (text != null) {
+                if (binding.editTextSend.text.toString().trim() == text) binding.editTextSend.text.clear()
+                model.sent.value = null
+            }
+        }
+        model.error.observe(this) { message ->
+            message?.let { Toast.makeText(this, it, Toast.LENGTH_LONG).show(); model.error.value = null }
+        }
+        App.session.authenticated.observe(this) {
+            if (!it) startActivity(Intent(this, LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                App.api.events().collect { model.refresh(intent.getStringExtra("contactEmail") ?: "") }
             }
         }
     }
-
-    // Limpa o campo de entrada de mensagem
-    private fun clearInputField() {
-        runOnUiThread {
-            binding.editTextSend.text.clear()
-        }
-    }
-
-    // Métodos para obter dados do Intent
-    private fun getContactName() = intent.getStringExtra("contactName") ?: ""
-    private fun getContactProfileImageUrl() = intent.getStringExtra("contactProfileImageUrl")
-    private fun getContactEmail() = intent.getStringExtra("contactEmail") ?: ""
-
+    override fun onSupportNavigateUp(): Boolean { finish(); return true }
 }
